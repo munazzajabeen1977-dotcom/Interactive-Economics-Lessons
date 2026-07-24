@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Economics Lessons</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Architects+Daughter&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page-bg: #fdf9e0;      /* light yellow */
+    --card-bg: #7a1f2b;      /* maroon */
+    --card-border: #2e7d32;  /* green boundary */
+    --text: #ffffff;         /* white text */
+    --text-dim: #f0dede;
+    --demand: #f2c94c;
+    --shadow: rgba(0,0,0,0.25);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: var(--page-bg);
+    color: #333;
+    font-family: 'Architects Daughter', cursive;
+    padding: 36px 16px 60px;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 32px; }
+  h1 {
+    font-family: 'Kalam', cursive; font-weight: 700;
+    font-size: clamp(1.6rem, 4.5vw, 2.4rem); margin: 0 0 8px;
+    color: #4a3b1f;
+  }
+  header p { color: #6b5b3d; font-size: 1rem; margin: 0; }
+
+  .grid {
+    display: grid; gap: 20px;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* Rectangular card with green boundary */
+  .card {
+    background: var(--card-bg);
+    border: 4px solid var(--card-border);
+    border-radius: 0;                 /* keep it a true rectangle */
+    box-shadow: 0 16px 30px var(--shadow);
+    padding: 22px 22px 20px;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: var(--text);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 22px 36px var(--shadow);
+  }
+  .card .accent {
+    width: 34px; height: 4px; border-radius: 2px;
+    margin-bottom: 12px;
+    background: var(--demand);
+  }
+  .card h2 {
+    font-family: 'Kalam', cursive; font-size: 1.2rem;
+    margin: 0 0 8px;
+    color: var(--text);
+  }
+  .card h4 {
+    color: var(--text);
+    margin: 0 0 6px;
+    font-family: 'Kalam', cursive;
+    font-size: 0.95rem;
+  }
+  .card p {
+    font-size: 0.9rem; color: var(--text-dim);
+    line-height: 1.5; margin: 0 0 16px;
+  }
+  .card ul {
+    margin: 0 0 16px; padding-left: 20px;
+    color: var(--text-dim); font-size: 0.88rem;
+  }
+  .card .open {
+    font-size: 0.88rem; font-weight: 700;
+    color: var(--text);
+    background: var(--card-border);
+    border: none;
+    border-radius: 4px;
+    padding: 8px 14px;
+    display: inline-flex; align-items: center; gap: 6px;
+    text-decoration: none;
+    width: fit-content;
+  }
+  .card .open::after { content: "→"; transition: transform 0.15s ease; }
+  .card:hover .open::after { transform: translateX(3px); }
+
+  footer {
+    text-align: center; margin-top: 40px;
+    font-size: 0.8rem; color: #6b5b3d;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Interactive Economics Lessons</h1>
+    <p>Interactive tools for exploring microeconomic and macroeconomic models</p>
+  </header>
+
+  <div class="grid">
+
+    <!-- Demand and Supply Curves -->
+    <div class="card">
+      <div class="accent"></div>
+      <h2>Demand &amp; Supply</h2>
+
+      <p class="card-description">
+        Explore Equilibrium Price and Quantity. Adjust Demand and Supply determinants to see how Demand and Supply Curves shift.
+      </p>
+
+      <div class="card-features">
+        <h4>Features</h4>
+        <ul>
+          <li>Equilibrium</li>
+        </ul>
+      </div>
+
+      <a href="demand_supply_simulator.html" class="open">
+        Open Simulator
+      </a>
+    </div>
+
+  </div>
+
+  <footer>Chalkboard-style economics simulators</footer>
+</div>
+</body>
+</html>

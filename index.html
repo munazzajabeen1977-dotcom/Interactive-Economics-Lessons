@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Economics Simulators Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Architects+Daughter&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --board: #1e3a2e;
+    --frame: #6b4a32;
+    --chalk: #f4f1e6;
+    --chalk-dim: #cfd6c9;
+    --demand: #f2c94c;
+    --supply: #e8927c;
+    --eq: #8fb8de;
+    --shadow: rgba(0,0,0,0.35);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: #0d1a14;
+    background-image: radial-gradient(circle at 20% 10%, #16291f 0%, #0d1a14 60%);
+    color: var(--chalk);
+    font-family: 'Architects Daughter', cursive;
+    padding: 36px 16px 60px;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 32px; }
+  h1 {
+    font-family: 'Kalam', cursive; font-weight: 700;
+    font-size: clamp(1.6rem, 4.5vw, 2.4rem); margin: 0 0 8px;
+  }
+  header p { color: var(--chalk-dim); font-size: 1rem; margin: 0; }
+
+  .grid {
+    display: grid; gap: 20px;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .card {
+    background: var(--board);
+    border: 10px solid var(--frame);
+    border-radius: 6px;
+    box-shadow: 0 16px 30px var(--shadow);
+    padding: 22px 22px 20px;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 22px 36px var(--shadow);
+  }
+  .card .accent {
+    width: 34px; height: 4px; border-radius: 2px;
+    margin-bottom: 12px;
+  }
+  .card h2 {
+    font-family: 'Kalam', cursive; font-size: 1.2rem;
+    margin: 0 0 8px;
+  }
+  .card p {
+    font-size: 0.9rem; color: var(--chalk-dim);
+    line-height: 1.5; margin: 0 0 16px; flex-grow: 1;
+  }
+  .card .tags {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px;
+  }
+  .card .tags span {
+    font-size: 0.72rem; color: var(--chalk-dim);
+    border: 1px dashed rgba(255,255,255,0.25);
+    border-radius: 20px; padding: 3px 10px;
+  }
+  .card .open {
+    font-size: 0.88rem; font-weight: 700;
+    color: var(--eq);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .card .open::after { content: "→"; transition: transform 0.15s ease; }
+  .card:hover .open::after { transform: translateX(3px); }
+
+  footer {
+    text-align: center; margin-top: 40px;
+    font-size: 0.8rem; color: rgba(207,214,201,0.55);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>📊 Economics Simulators</h1>
+    <p>Interactive tools for exploring microeconomic and macroeconomic models</p>
+  </header>
+
+  <div class="grid">
+
+    <a class="card" href="demand_supply_determinants_simulator.html">
+      <div class="accent" style="background:var(--demand)"></div>
+      <h2>Demand &amp; Supply</h2>
+      <p>See how income, related-good prices, buyer/seller numbers, tastes, and expectations shift each curve — and where the new equilibrium lands.</p>
+      <div class="tags">
+        <span>Determinants of demand</span>
+        <span>Determinants of supply</span>
+        <span>Equilibrium</span>
+      </div>
+      <span class="open">Open simulator</span>
+    </a>
+
+    <a class="card" href="phillips_curve_simulator.html">
+      <div class="accent" style="background:var(--supply)"></div>
+      <h2>Phillips Curve</h2>
+      <p>Explore the relationship between inflation and unemployment. Adjust expectations and supply shocks to see the curve shift.</p>
+      <div class="tags">
+        <span>Inflation expectations</span>
+        <span>Supply shocks</span>
+        <span>Stagflation</span>
+      </div>
+      <span class="open">Open simulator</span>
+    </a>
+
+    <a class="card" href="islm_simulator.html">
+      <div class="accent" style="background:var(--eq)"></div>
+      <h2>IS-LM Model</h2>
+      <p>Study fiscal and monetary policy by adjusting government spending, taxation, and money supply.</p>
+      <div class="tags">
+        <span>Fiscal policy</span>
+        <span>Monetary policy</span>
+        <span>Equilibrium</span>
+      </div>
+      <span class="open">Open simulator</span>
+    </a>
+
+    <a class="card" href="asad_simulator.html">
+      <div class="accent" style="background:var(--demand)"></div>
+      <h2>AS-AD Model</h2>
+      <p>Analyze aggregate supply and demand. Explore inflation, output, and supply shocks across the short and long run.</p>
+      <div class="tags">
+        <span>AD curve</span>
+        <span>SRAS / LRAS</span>
+        <span>Supply shocks</span>
+      </div>
+      <span class="open">Open simulator</span>
+    </a>
+
+  </div>
+
+  <footer>
+    © 2026 · Interactive learning tools for undergraduate economics courses
+  </footer>
+</div>
+</body>
+</html>

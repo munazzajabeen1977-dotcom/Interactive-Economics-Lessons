@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supply & Demand Simulator</title>
+<style>
+  :root {
+    --bg: #10151c;
+    --panel: #1a2230;
+    --ink: #e8edf4;
+    --muted: #8b96a8;
+    --demand: #5eb3ff;
+    --supply: #ff8c5e;
+    --grid: #2a3444;
+    --accent: #ffd166;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: 24px 16px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  p.sub { color: var(--muted); margin: 0 0 20px; font-size: 0.92rem; }
+  .panel {
+    background: var(--panel);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  canvas { width: 100%; height: auto; display: block; background: var(--bg); border-radius: 8px; }
+  .controls { display: grid; gap: 18px; margin-top: 20px; }
+  .control label {
+    display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--muted); margin-bottom: 6px;
+  }
+  .control label span:last-child { color: var(--ink); font-weight: 600; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .legend { display: flex; gap: 18px; margin-top: 14px; font-size: 0.82rem; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .result { margin-top: 14px; font-size: 0.9rem; color: var(--muted); }
+  .result b { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Supply &amp; Demand Simulator</h1>
+  <p class="sub">Shift the curves and watch equilibrium price and quantity respond.</p>
+
+  <div class="panel">
+    <canvas id="chart" width="640" height="400"></canvas>
+
+    <div class="legend">
+      <span><i class="dot" style="background:var(--demand)"></i> Demand</span>
+      <span><i class="dot" style="background:var(--supply)"></i> Supply</span>
+    </div>
+
+    <div class="controls">
+      <div class="control">
+        <label>Demand shift (income / preferences) <span id="demandVal">0</span></label>
+        <input type="range" id="demandShift" min="-40" max="40" value="0" step="1">
+      </div>
+      <div class="control">
+        <label>Supply shift (input costs / tech) <span id="supplyVal">0</span></label>
+        <input type="range" id="supplyShift" min="-40" max="40" value="0" step="1">
+      </div>
+    </div>
+
+    <div class="result">
+      Equilibrium: <b id="eqPrice">--</b> price, <b id="eqQty">--</b> quantity
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- 1. STATE ----
+const state = { demandShift: 0, supplyShift: 0 };
+
+// ---- 2. MODEL (linear demand/supply, just for illustration) ----
+// Demand: P = 100 - Q + demandShift
+// Supply: P = 10 + Q - supplyShift   (higher cost shifts supply up => less supplied at each price)
+function demandP(q) { return 100 - q + state.demandShift; }
+function supplyP(q) { return 10 + q - state.supplyShift; }
+
+function equilibrium() {
+  // 100 - Q + d = 10 + Q - s  =>  90 + d + s = 2Q
+  const q = (90 + state.demandShift + state.supplyShift) / 2;
+  const p = demandP(q);
+  return { q, p };
+}
+
+// ---- 3. RENDER ----
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const pad = 40;
+
+function toX(q) { return pad + (q / 100) * (W - pad * 2); }
+function toY(p) { return H - pad - (p / 110) * (H - pad * 2); }
+
+function render() {
+  ctx.clearRect(0, 0, W, H);
+
+  // axes
+  ctx.strokeStyle = '#2a3444';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad, pad); ctx.lineTo(pad, H - pad); ctx.lineTo(W - pad, H - pad);
+  ctx.stroke();
+  ctx.fillStyle = '#8b96a8';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('Quantity →', W - pad - 60, H - pad + 20);
+  ctx.save();
+  ctx.translate(pad - 24, pad + 10);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Price →', 0, 0);
+  ctx.restore();
+
+  // demand curve
+  drawCurve(demandP, '#5eb3ff');
+  // supply curve
+  drawCurve(supplyP, '#ff8c5e');
+
+  // equilibrium point
+  const { q, p } = equilibrium();
+  ctx.fillStyle = '#ffd166';
+  ctx.beginPath();
+  ctx.arc(toX(q), toY(p), 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#ffd16688';
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(toX(q), H - pad); ctx.lineTo(toX(q), toY(p));
+  ctx.lineTo(pad, toY(p));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  document.getElementById('eqPrice').textContent = p.toFixed(1);
+  document.getElementById('eqQty').textContent = q.toFixed(1);
+}
+
+function drawCurve(fn, color) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  let started = false;
+  for (let q = 0; q <= 100; q += 2) {
+    const p = fn(q);
+    if (p < 0 || p > 110) continue;
+    const x = toX(q), y = toY(p);
+    if (!started) { ctx.moveTo(x, y); started = true; }
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+}
+
+// ---- 4. WIRE UP SLIDERS ----
+const demandSlider = document.getElementById('demandShift');
+const supplySlider = document.getElementById('supplyShift');
+
+demandSlider.addEventListener('input', e => {
+  state.demandShift = Number(e.target.value);
+  document.getElementById('demandVal').textContent = state.demandShift;
+  render();
+});
+supplySlider.addEventListener('input', e => {
+  state.supplyShift = Number(e.target.value);
+  document.getElementById('supplyVal').textContent = state.supplyShift;
+  render();
+});
+
+render();
+</script>
+</body>
+</html>

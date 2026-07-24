@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Determinants of Demand & Supply Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Architects+Daughter&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --board: #1e3a2e;
+    --frame: #6b4a32;
+    --chalk: #f4f1e6;
+    --chalk-dim: #cfd6c9;
+    --demand: #f2c94c;
+    --supply: #e8927c;
+    --eq: #8fb8de;
+    --shadow: rgba(0,0,0,0.35);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: #0d1a14;
+    background-image: radial-gradient(circle at 20% 10%, #16291f 0%, #0d1a14 60%);
+    color: var(--chalk);
+    font-family: 'Architects Daughter', cursive;
+    padding: 28px 14px 60px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 20px; }
+  h1 {
+    font-family: 'Kalam', cursive; font-weight: 700;
+    font-size: clamp(1.4rem, 4vw, 2rem); margin: 0 0 6px;
+  }
+  header p { color: var(--chalk-dim); font-size: 0.93rem; margin: 0; }
+
+  .board {
+    background: var(--board);
+    border: 14px solid var(--frame);
+    border-radius: 6px;
+    box-shadow: 0 20px 40px var(--shadow), inset 0 0 60px rgba(0,0,0,0.3);
+    padding: 20px;
+  }
+  canvas { width: 100%; height: auto; display: block; }
+  .legend {
+    display: flex; gap: 20px; justify-content: center;
+    margin-top: 10px; font-size: 0.85rem; color: var(--chalk-dim);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+
+  .readout {
+    display: flex; gap: 28px; justify-content: center; margin-top: 16px;
+    font-family: 'Kalam', cursive; font-size: 1rem;
+  }
+  .readout div span:first-child { color: var(--chalk-dim); font-size: 0.8rem; display: block; }
+  .readout b { font-size: 1.3rem; }
+
+  .groups {
+    display: grid; grid-template-columns: 1fr; gap: 18px;
+    margin-top: 20px;
+  }
+  @media (min-width: 720px) {
+    .groups { grid-template-columns: 1fr 1fr; }
+  }
+
+  .group {
+    background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .group h2 {
+    font-family: 'Kalam', cursive; font-size: 1.05rem; margin: 0 0 4px;
+  }
+  .group.demand h2 { color: var(--demand); }
+  .group.supply h2 { color: var(--supply); }
+  .group .net {
+    font-size: 0.82rem; color: var(--chalk-dim); margin-bottom: 14px;
+  }
+  .group .net b { color: var(--chalk); }
+
+  .control { margin-bottom: 16px; }
+  .control:last-child { margin-bottom: 0; }
+  .control label {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 0.85rem; color: var(--chalk-dim); margin-bottom: 3px;
+  }
+  .control label b { color: var(--chalk); font-weight: 700; }
+  .control .hint { font-size: 0.72rem; color: rgba(207,214,201,0.6); margin-bottom: 5px; }
+  input[type=range] {
+    width: 100%; -webkit-appearance: none;
+    height: 4px; background: rgba(255,255,255,0.25);
+    border-radius: 2px; outline: none;
+  }
+  .group.demand input[type=range] { accent-color: var(--demand); }
+  .group.supply input[type=range] { accent-color: var(--supply); }
+
+  .reset-row { text-align: center; margin-top: 18px; }
+  .reset-row button {
+    font-family: 'Architects Daughter', cursive;
+    background: transparent; color: var(--supply);
+    border: 1.5px dashed var(--supply);
+    border-radius: 20px; padding: 7px 18px;
+    font-size: 0.85rem; cursor: pointer;
+  }
+  .reset-row button:hover { background: rgba(232,146,124,0.12); }
+
+  .note {
+    margin-top: 20px; font-size: 0.88rem; line-height: 1.5; color: var(--chalk-dim);
+    border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 14px;
+  }
+  .note b { color: var(--chalk); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Determinants of Demand &amp; Supply</h1>
+    <p>Adjust each underlying factor and watch demand or supply shift</p>
+  </header>
+
+  <div class="board">
+    <canvas id="chart" width="760" height="420"></canvas>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--demand)"></i>Demand</span>
+      <span><i class="dot" style="background:var(--supply)"></i>Supply</span>
+      <span><i class="dot" style="background:var(--eq)"></i>Equilibrium</span>
+    </div>
+    <div class="readout">
+      <div><span>Equilibrium price</span><b id="eqPrice">--</b></div>
+      <div><span>Equilibrium quantity</span><b id="eqQty">--</b></div>
+      <div><span>Movement</span><b id="direction">--</b></div>
+    </div>
+  </div>
+
+  <div class="groups">
+    <div class="group demand">
+      <h2>Determinants of Demand</h2>
+      <div class="net">Net demand shift: <b id="demandNet">0</b></div>
+
+      <div class="control">
+        <label>Income of consumers <b id="v-income">0</b></label>
+        <div class="hint">Higher income → buyers can afford more (normal good)</div>
+        <input type="range" id="income" min="-10" max="10" value="0" step="1">
+      </div>
+
+      <div class="control">
+        <label>Prices of related goods <b id="v-related">0</b></label>
+        <div class="hint">Pricier substitutes push buyers here; pricier complements push them away</div>
+        <input type="range" id="related" min="-10" max="10" value="0" step="1">
+      </div>
+
+      <div class="control">
+        <label>Number of buyers <b id="v-buyers">0</b></label>
+        <div class="hint">More buyers in the market → more demand at every price</div>
+        <input type="range" id="buyers" min="-10" max="10" value="0" step="1">
+      </div>
+
+      <div class="control">
+        <label>Tastes/Preferences of consumers <b id="v-tastes">0</b></label>
+        <div class="hint">A stronger preference for the good → buyers want more of it at every price</div>
+        <input type="range" id="tastes" min="-10" max="10" value="0" step="1">
+      </div>
+
+      <div class="control">
+        <label>Consumer expectations <b id="v-expect">0</b></label>
+        <div class="hint">Expecting higher prices or income ahead → buy more now</div>
+        <input type="range" id="expect" min="-10" max="10" value="0" step="1">
+      </div>
+    </div>
+
+    <div class="group supply">
+      <h2>Determinants of Supply</h2>
+      <div class="net">Net supply shift: <b id="supplyNet">0</b></div>
+
+      <div class="control">
+        <label>Prices of inputs <b id="v-inputs">0</b></label>
+        <div class="hint">Pricier raw materials, labor, or energy → costlier to produce, less supplied</div>
+        <input type="range" id="inputs" min="-10" max="10" value="0" step="1">
+      </div>
+
+      <div class="control">
+        <label>Prices of other goods <b id="v-other">0</b></label>
+        <div class="hint">If other goods pay better, producers switch away → less supplied here</div>
+        <input type="range" id="other" min="-10" max="10" value="0" step="1">
+      </div>
+
+      <div class="control">
+        <label>Number of sellers <b id="v-sellers">0</b></label>
+        <div class="hint">More firms in the market → more supplied at every price</div>
+        <input type="range" id="sellers" min="-10" max="10" value="0" step="1">
+      </div>
+
+      <div class="control">
+        <label>Techniques of production <b id="v-tech">0</b></label>
+        <div class="hint">Better technology or methods → cheaper to produce more</div>
+        <input type="range" id="tech" min="-10" max="10" value="0" step="1">
+      </div>
+
+      <div class="control">
+        <label>Producer expectations <b id="v-pexpect">0</b></label>
+        <div class="hint">Expecting higher prices ahead → hold back stock now, supply less today</div>
+        <input type="range" id="pexpect" min="-10" max="10" value="0" step="1">
+      </div>
+
+      <div class="reset-row">
+        <button id="resetBtn">Reset all</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>How to read it:</b> each slider is one determinant working alone — the curve shift you
+    see is the sum of everything set on that side. Demand determinants move the yellow curve;
+    supply determinants move the coral curve. Where the two curves cross is the equilibrium:
+    the price and quantity where the market clears.
+  </div>
+</div>
+
+<script>
+// ---- DEMAND DETERMINANTS ----
+// each control maps to a signed contribution to the net demand shift
+const demandInputs = {
+  income:  { el: null, sign: 1 },   // higher income -> more demand
+  related: { el: null, sign: 1 },   // slider already signed by user (substitute vs complement)
+  buyers:  { el: null, sign: 1 },   // more buyers -> more demand
+  tastes:  { el: null, sign: 1 },   // stronger preference for the good -> more demand
+  expect:  { el: null, sign: 1 },   // expecting scarcity/higher prices -> buy now
+};
+
+// ---- SUPPLY DETERMINANTS ----
+const supplyInputs = {
+  inputs:  { el: null, sign: -1 },  // pricier inputs -> less supply
+  tech:    { el: null, sign: 1 },   // better tech -> more supply
+  other:   { el: null, sign: -1 },  // better-paying alternatives -> less supply here
+  sellers: { el: null, sign: 1 },   // more firms -> more supply
+  pexpect: { el: null, sign: -1 },  // expecting higher future prices -> hold back stock now
+};
+
+Object.keys(demandInputs).forEach(k => demandInputs[k].el = document.getElementById(k));
+Object.keys(supplyInputs).forEach(k => supplyInputs[k].el = document.getElementById(k));
+
+const valueLabels = {
+  income: 'v-income', related: 'v-related', buyers: 'v-buyers',
+  tastes: 'v-tastes', expect: 'v-expect',
+  inputs: 'v-inputs', tech: 'v-tech', other: 'v-other',
+  sellers: 'v-sellers', pexpect: 'v-pexpect'
+};
+
+function netDemandShift() {
+  return Object.values(demandInputs).reduce((sum, d) => sum + d.sign * Number(d.el.value), 0);
+}
+function netSupplyShift() {
+  return Object.values(supplyInputs).reduce((sum, d) => sum + d.sign * Number(d.el.value), 0);
+}
+
+// ---- MODEL ----
+function demandP(q, shift) { return 100 - q + shift; }
+function supplyP(q, shift) { return 10 + q - shift; }
+function equilibrium(dShift, sShift) {
+  const q = (90 + dShift + sShift) / 2;
+  const p = demandP(q, dShift);
+  return { q, p };
+}
+
+// ---- CANVAS ----
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const pad = 46;
+const QMAX = 110, PMAX = 130;
+
+function toX(q) { return pad + (q / QMAX) * (W - pad * 2); }
+function toY(p) { return H - pad - (p / PMAX) * (H - pad * 2); }
+function seededJitter(i) { return Math.sin(i * 12.9898) * 0.9; }
+
+function drawAxes() {
+  ctx.strokeStyle = 'rgba(244,241,230,0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pad, pad); ctx.lineTo(pad, H - pad); ctx.lineTo(W - pad, H - pad);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(244,241,230,0.6)';
+  ctx.font = "14px 'Architects Daughter', cursive";
+  ctx.fillText('Quantity', W - pad - 66, H - pad + 26);
+  ctx.save();
+  ctx.translate(pad - 30, pad + 30);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Price', 0, 0);
+  ctx.restore();
+}
+
+function drawCurve(fn, shift, color, seedOffset) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  let started = false, i = 0;
+  for (let q = 0; q <= QMAX; q += 2) {
+    const p = fn(q, shift);
+    if (p < -5 || p > PMAX + 5) { i++; continue; }
+    const x = toX(q) + seededJitter(i + seedOffset);
+    const y = toY(p) + seededJitter(i * 2 + seedOffset);
+    if (!started) { ctx.moveTo(x, y); started = true; }
+    else ctx.lineTo(x, y);
+    i++;
+  }
+  ctx.stroke();
+}
+
+function getVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+let prevEq = null;
+
+function render() {
+  const dShift = netDemandShift();
+  const sShift = netSupplyShift();
+
+  document.getElementById('demandNet').textContent = (dShift > 0 ? '+' : '') + dShift;
+  document.getElementById('supplyNet').textContent = (sShift > 0 ? '+' : '') + sShift;
+
+  ctx.clearRect(0, 0, W, H);
+  drawAxes();
+  drawCurve(demandP, dShift, getVar('--demand'), 0);
+  drawCurve(supplyP, sShift, getVar('--supply'), 50);
+
+  const { q, p } = equilibrium(dShift, sShift);
+  const x = toX(q), y = toY(p);
+
+  ctx.strokeStyle = 'rgba(143,184,222,0.55)';
+  ctx.setLineDash([5, 5]);
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x, H - pad); ctx.lineTo(x, y); ctx.lineTo(pad, y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = getVar('--eq');
+  ctx.beginPath();
+  ctx.arc(x, y, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  document.getElementById('eqPrice').textContent = p.toFixed(1);
+  document.getElementById('eqQty').textContent = q.toFixed(1);
+
+  let dir = 'No change';
+  if (prevEq) {
+    const dq = q - prevEq.q, dp = p - prevEq.p;
+    if (Math.abs(dq) > 0.1 || Math.abs(dp) > 0.1) {
+      const qDir = dq > 0 ? 'Q↑' : dq < 0 ? 'Q↓' : 'Q→';
+      const pDir = dp > 0 ? 'P↑' : dp < 0 ? 'P↓' : 'P→';
+      dir = `${pDir} ${qDir}`;
+    }
+  }
+  document.getElementById('direction').textContent = dir;
+  prevEq = { q, p };
+}
+
+// ---- WIRE UP ----
+[...Object.entries(demandInputs), ...Object.entries(supplyInputs)].forEach(([key, cfg]) => {
+  cfg.el.addEventListener('input', () => {
+    document.getElementById(valueLabels[key]).textContent = cfg.el.value;
+    render();
+  });
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  [...Object.values(demandInputs), ...Object.values(supplyInputs)].forEach(cfg => {
+    cfg.el.value = 0;
+  });
+  Object.keys(valueLabels).forEach(k => document.getElementById(valueLabels[k]).textContent = '0');
+  render();
+});
+
+render();
+</script>
+</body>
+</html>

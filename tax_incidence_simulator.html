@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tax Incidence: Effects on Buyers &amp; Sellers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Architects+Daughter&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --board: #1e3a2e; --frame: #6b4a32;
+    --chalk: #f4f1e6; --chalk-dim: #cfd6c9;
+    --demand: #f2c94c; --supply: #e8927c;
+    --revenue: #8fb8de; --dwl: #c98fde;
+    --shadow: rgba(0,0,0,0.35);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: #0d1a14;
+    background-image: radial-gradient(circle at 20% 10%, #16291f 0%, #0d1a14 60%);
+    color: var(--chalk); font-family: 'Architects Daughter', cursive;
+    padding: 28px 14px 60px;
+  }
+  .wrap { max-width: 840px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 20px; }
+  h1 { font-family: 'Kalam', cursive; font-weight: 700; font-size: clamp(1.4rem, 4vw, 2rem); margin: 0 0 6px; }
+  header p { color: var(--chalk-dim); font-size: 0.93rem; margin: 0; }
+
+  .board {
+    background: var(--board); border: 14px solid var(--frame); border-radius: 6px;
+    box-shadow: 0 20px 40px var(--shadow), inset 0 0 60px rgba(0,0,0,0.3); padding: 20px;
+  }
+  canvas { width: 100%; height: auto; display: block; }
+  .legend { display: flex; gap: 14px; justify-content: center; margin-top: 10px; font-size: 0.78rem; color: var(--chalk-dim); flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .sq { width: 11px; height: 11px; display: inline-block; }
+
+  .readout {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 14px;
+    margin-top: 18px; font-family: 'Kalam', cursive;
+  }
+  .readout div { text-align: center; }
+  .readout div span:first-child { color: var(--chalk-dim); font-size: 0.72rem; display: block; }
+  .readout b { font-size: 1.1rem; }
+
+  .toggle {
+    display: flex; justify-content: center; gap: 8px; margin-top: 16px;
+  }
+  .toggle button {
+    font-family: 'Kalam', cursive; font-weight: 700;
+    background: transparent; color: var(--chalk-dim);
+    border: 1.5px solid rgba(255,255,255,0.2); border-radius: 20px;
+    padding: 8px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .toggle button.active.buyers { background: rgba(242,201,76,0.18); border-color: var(--demand); color: var(--demand); }
+  .toggle button.active.sellers { background: rgba(232,146,124,0.18); border-color: var(--supply); color: var(--supply); }
+
+  .panel {
+    background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 18px 20px; margin-top: 18px;
+  }
+  .control { margin-bottom: 16px; }
+  .control:last-child { margin-bottom: 0; }
+  .control label { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--chalk-dim); margin-bottom: 4px; }
+  .control label b { color: var(--chalk); }
+  .control .hint { font-size: 0.75rem; color: rgba(207,214,201,0.6); margin-bottom: 6px; }
+  input[type=range] { width: 100%; -webkit-appearance: none; height: 4px; background: rgba(255,255,255,0.25); border-radius: 2px; outline: none; }
+  #tax { accent-color: var(--dwl); }
+  #demandSteep { accent-color: var(--demand); }
+  #supplySteep { accent-color: var(--supply); }
+
+  .burden-bar {
+    margin-top: 18px;
+  }
+  .burden-bar .label { font-size: 0.8rem; color: var(--chalk-dim); margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .burden-track {
+    display: flex; height: 22px; border-radius: 6px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .burden-track div { display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-family: 'Kalam', cursive; }
+  .burden-buyer { background: var(--demand); color: #2a2410; }
+  .burden-seller { background: var(--supply); color: #2a1410; }
+
+  .note { margin-top: 18px; font-size: 0.88rem; line-height: 1.55; color: var(--chalk-dim);
+    border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 14px; }
+  .note b { color: var(--chalk); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Tax Incidence: Effects on Buyers &amp; Sellers</h1>
+    <p>See how a per-unit tax splits between buyers and sellers — and why it doesn't matter who pays it</p>
+  </header>
+
+  <div class="board">
+    <canvas id="chart" width="720" height="440"></canvas>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--demand)"></i>Demand</span>
+      <span><i class="dot" style="background:var(--supply)"></i>Supply</span>
+      <span><i class="sq" style="background:var(--revenue);opacity:0.45"></i>Tax revenue</span>
+      <span><i class="sq" style="background:var(--dwl);opacity:0.5"></i>Deadweight loss</span>
+    </div>
+
+    <div class="readout">
+      <div><span>Price buyers pay</span><b id="pBuy" style="color:var(--demand)">--</b></div>
+      <div><span>Price sellers keep</span><b id="pSell" style="color:var(--supply)">--</b></div>
+      <div><span>Quantity traded</span><b id="qVal">--</b></div>
+      <div><span>Tax revenue</span><b id="taxRev" style="color:var(--revenue)">--</b></div>
+      <div><span>Deadweight loss</span><b id="dwlVal" style="color:var(--dwl)">--</b></div>
+    </div>
+
+    <div class="toggle">
+      <button id="btnSellers" class="active sellers">Tax levied on Sellers</button>
+      <button id="btnBuyers" class="buyers">Tax levied on Buyers</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="control">
+      <label>Tax per unit <b id="v-tax">10</b></label>
+      <div class="hint">The size of the wedge the tax drives between what buyers pay and what sellers keep</div>
+      <input type="range" id="tax" min="0" max="60" value="10" step="1">
+    </div>
+    <div class="control">
+      <label>Demand steepness (elasticity) <b id="v-dSteep">1.0</b></label>
+      <div class="hint">Flatter demand = more elastic buyers = buyers absorb less of the tax</div>
+      <input type="range" id="demandSteep" min="0.4" max="3" value="1" step="0.1">
+    </div>
+    <div class="control">
+      <label>Supply steepness (elasticity) <b id="v-sSteep">1.0</b></label>
+      <div class="hint">Flatter supply = more elastic sellers = sellers absorb less of the tax</div>
+      <input type="range" id="supplySteep" min="0.4" max="3" value="1" step="0.1">
+    </div>
+
+    <div class="burden-bar">
+      <div class="label"><span>Who actually bears the tax</span><span id="burdenSplit">--</span></div>
+      <div class="burden-track">
+        <div class="burden-buyer" id="buyerBar">Buyers</div>
+        <div class="burden-seller" id="sellerBar">Sellers</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>How to read it:</b> switch the toggle between "levied on sellers" and "levied on buyers" —
+    notice the price buyers pay, the price sellers keep, the quantity traded, and the burden
+    split all stay exactly the same. The <b>economic</b> incidence of a tax depends on relative
+    elasticity, not on who is legally required to send the money to the government. The
+    <b>flatter</b> (more elastic) side of the market always bears the <b>smaller</b> share of the tax.
+  </div>
+</div>
+
+<script>
+const A = 100; // demand price-axis intercept
+const C = 10;  // supply price-axis intercept
+
+let taxOnSellers = true;
+
+function getVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+// ---- CANVAS ----
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const pad = 48;
+const QMAX_VIEW = 100, PMAX_VIEW = 110;
+
+function toX(q) { return pad + (q / QMAX_VIEW) * (W - pad * 2); }
+function toY(p) { return H - pad - (p / PMAX_VIEW) * (H - pad * 2); }
+function seededJitter(i) { return Math.sin(i * 12.9898) * 0.7; }
+
+function drawAxes() {
+  ctx.strokeStyle = 'rgba(244,241,230,0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pad, pad); ctx.lineTo(pad, H - pad); ctx.lineTo(W - pad, H - pad);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(244,241,230,0.6)';
+  ctx.font = "14px 'Architects Daughter', cursive";
+  ctx.fillText('Quantity', W - pad - 66, H - pad + 26);
+  ctx.save();
+  ctx.translate(pad - 30, pad + 30);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Price', 0, 0);
+  ctx.restore();
+}
+
+function drawLine(pFn, color, dashed, jitterSeed) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = dashed ? 1.6 : 3;
+  ctx.lineCap = 'round';
+  if (dashed) ctx.setLineDash([5, 5]); else ctx.setLineDash([]);
+  ctx.beginPath();
+  let started = false, i = 0;
+  for (let q = 0; q <= QMAX_VIEW; q += 2) {
+    const p = pFn(q);
+    if (p < -5 || p > PMAX_VIEW + 5) { i++; continue; }
+    const x = toX(q) + (dashed ? 0 : seededJitter(i + jitterSeed));
+    const y = toY(p) + (dashed ? 0 : seededJitter(i * 2 + jitterSeed));
+    if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+    i++;
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function render() {
+  const t = Number(document.getElementById('tax').value);
+  const bD = Number(document.getElementById('demandSteep').value);
+  const bS = Number(document.getElementById('supplySteep').value);
+  document.getElementById('v-tax').textContent = t;
+  document.getElementById('v-dSteep').textContent = bD.toFixed(1);
+  document.getElementById('v-sSteep').textContent = bS.toFixed(1);
+
+  // original (no-tax) equilibrium
+  const demandP = q => A - bD * q;
+  const supplyP = q => C + bS * q;
+  const q0 = (A - C) / (bD + bS);
+  const p0 = demandP(q0);
+
+  // after-tax equilibrium (same regardless of which side it's levied on)
+  const q1 = Math.max(0, (A - C - t) / (bD + bS));
+  const pBuy = demandP(q1);   // price buyers pay
+  const pSell = pBuy - t;     // price sellers keep
+
+  // curve actually drawn as "shifted" depends on toggle, purely visual
+  const effDemandP = q => taxOnSellers ? demandP(q) : demandP(q) - t;
+  const effSupplyP = q => taxOnSellers ? supplyP(q) + t : supplyP(q);
+
+  ctx.clearRect(0, 0, W, H);
+  drawAxes();
+
+  // faint original curves
+  drawLine(demandP, 'rgba(242,201,76,0.35)', true, 0);
+  drawLine(supplyP, 'rgba(232,146,124,0.35)', true, 0);
+
+  // deadweight loss triangle (between q1 and q0)
+  if (q1 < q0) {
+    ctx.fillStyle = getVar('--dwl');
+    ctx.globalAlpha = 0.35;
+    ctx.beginPath();
+    ctx.moveTo(toX(q1), toY(pBuy));
+    ctx.lineTo(toX(q1), toY(pSell));
+    ctx.lineTo(toX(q0), toY(p0));
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // tax revenue rectangle
+  ctx.fillStyle = getVar('--revenue');
+  ctx.globalAlpha = 0.3;
+  ctx.fillRect(toX(0), toY(pBuy), toX(q1) - toX(0), toY(pSell) - toY(pBuy));
+  ctx.globalAlpha = 1;
+
+  // solid effective curves (the one that shifted is solid+bold, matches its color)
+  drawLine(effDemandP, getVar('--demand'), false, 0);
+  drawLine(effSupplyP, getVar('--supply'), false, 50);
+
+  // tax wedge line at q1
+  ctx.strokeStyle = getVar('--chalk');
+  ctx.lineWidth = 2;
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.moveTo(toX(q1), toY(pBuy));
+  ctx.lineTo(toX(q1), toY(pSell));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // markers
+  function marker(q, p, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(toX(q), toY(p), 5.5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+  marker(q0, p0, getVar('--chalk-dim'));
+  marker(q1, pBuy, getVar('--demand'));
+  marker(q1, pSell, getVar('--supply'));
+
+  // dashed guides to axes for pBuy/pSell/q1
+  ctx.strokeStyle = 'rgba(244,241,230,0.3)';
+  ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad, toY(pBuy)); ctx.lineTo(toX(q1), toY(pBuy));
+  ctx.moveTo(pad, toY(pSell)); ctx.lineTo(toX(q1), toY(pSell));
+  ctx.moveTo(toX(q1), H - pad); ctx.lineTo(toX(q1), toY(Math.max(pBuy, pSell)));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // readouts
+  document.getElementById('pBuy').textContent = pBuy.toFixed(1);
+  document.getElementById('pSell').textContent = pSell.toFixed(1);
+  document.getElementById('qVal').textContent = q1.toFixed(1);
+  const revenue = t * q1;
+  const dwl = 0.5 * t * (q0 - q1);
+  document.getElementById('taxRev').textContent = revenue.toFixed(0);
+  document.getElementById('dwlVal').textContent = dwl.toFixed(0);
+
+  // burden split
+  const buyerBurdenPerUnit = pBuy - p0;
+  const sellerBurdenPerUnit = p0 - pSell;
+  const totalBurden = buyerBurdenPerUnit + sellerBurdenPerUnit;
+  const buyerPct = totalBurden > 0 ? (buyerBurdenPerUnit / totalBurden) * 100 : 50;
+  const sellerPct = 100 - buyerPct;
+
+  const buyerBar = document.getElementById('buyerBar');
+  const sellerBar = document.getElementById('sellerBar');
+  buyerBar.style.width = buyerPct + '%';
+  sellerBar.style.width = sellerPct + '%';
+  buyerBar.textContent = buyerPct > 12 ? buyerPct.toFixed(0) + '% Buyers' : '';
+  sellerBar.textContent = sellerPct > 12 ? sellerPct.toFixed(0) + '% Sellers' : '';
+  document.getElementById('burdenSplit').textContent =
+    buyerPct.toFixed(0) + '% buyers / ' + sellerPct.toFixed(0) + '% sellers';
+}
+
+document.getElementById('tax').addEventListener('input', render);
+document.getElementById('demandSteep').addEventListener('input', render);
+document.getElementById('supplySteep').addEventListener('input', render);
+
+document.getElementById('btnSellers').addEventListener('click', () => {
+  taxOnSellers = true;
+  document.getElementById('btnSellers').classList.add('active');
+  document.getElementById('btnBuyers').classList.remove('active');
+  render();
+});
+document.getElementById('btnBuyers').addEventListener('click', () => {
+  taxOnSellers = false;
+  document.getElementById('btnBuyers').classList.add('active');
+  document.getElementById('btnSellers').classList.remove('active');
+  render();
+});
+
+render();
+</script>
+</body>
+</html>

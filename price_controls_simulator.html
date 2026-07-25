@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Price Controls: Ceilings &amp; Floors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Architects+Daughter&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --board: #1e3a2e; --frame: #6b4a32;
+    --chalk: #f4f1e6; --chalk-dim: #cfd6c9;
+    --demand: #f2c94c; --supply: #e8927c;
+    --control: #8fb8de; --dwl: #c98fde;
+    --shadow: rgba(0,0,0,0.35);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: #0d1a14;
+    background-image: radial-gradient(circle at 20% 10%, #16291f 0%, #0d1a14 60%);
+    color: var(--chalk); font-family: 'Architects Daughter', cursive;
+    padding: 28px 14px 60px;
+  }
+  .wrap { max-width: 840px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 20px; }
+  h1 { font-family: 'Kalam', cursive; font-weight: 700; font-size: clamp(1.4rem, 4vw, 2rem); margin: 0 0 6px; }
+  header p { color: var(--chalk-dim); font-size: 0.93rem; margin: 0; }
+
+  .board {
+    background: var(--board); border: 14px solid var(--frame); border-radius: 6px;
+    box-shadow: 0 20px 40px var(--shadow), inset 0 0 60px rgba(0,0,0,0.3); padding: 20px;
+  }
+  canvas { width: 100%; height: auto; display: block; }
+  .legend { display: flex; gap: 14px; justify-content: center; margin-top: 10px; font-size: 0.78rem; color: var(--chalk-dim); flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .sq { width: 11px; height: 11px; display: inline-block; }
+
+  .readout {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 14px;
+    margin-top: 18px; font-family: 'Kalam', cursive;
+  }
+  .readout div { text-align: center; }
+  .readout div span:first-child { color: var(--chalk-dim); font-size: 0.72rem; display: block; }
+  .readout b { font-size: 1.1rem; }
+
+  .badge {
+    display: block; text-align: center; margin-top: 12px; padding: 6px 16px; border-radius: 20px;
+    font-family: 'Kalam', cursive; font-size: 0.9rem; font-weight: 700;
+  }
+
+  .toggle {
+    display: flex; justify-content: center; gap: 8px; margin-top: 16px;
+  }
+  .toggle button {
+    font-family: 'Kalam', cursive; font-weight: 700;
+    background: transparent; color: var(--chalk-dim);
+    border: 1.5px solid rgba(255,255,255,0.2); border-radius: 20px;
+    padding: 8px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .toggle button.active.ceiling { background: rgba(143,184,222,0.18); border-color: var(--control); color: var(--control); }
+  .toggle button.active.floor { background: rgba(232,146,124,0.18); border-color: var(--supply); color: var(--supply); }
+
+  .panel {
+    background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 18px 20px; margin-top: 18px;
+  }
+  .control { margin-bottom: 16px; }
+  .control:last-child { margin-bottom: 0; }
+  .control label { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--chalk-dim); margin-bottom: 4px; }
+  .control label b { color: var(--chalk); }
+  .control .hint { font-size: 0.75rem; color: rgba(207,214,201,0.6); margin-bottom: 6px; }
+  input[type=range] { width: 100%; -webkit-appearance: none; height: 4px; background: rgba(255,255,255,0.25); border-radius: 2px; outline: none; }
+  #controlPrice { accent-color: var(--control); }
+  #demandSteep { accent-color: var(--demand); }
+  #supplySteep { accent-color: var(--supply); }
+
+  .examples { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .examples button {
+    font-family: 'Architects Daughter', cursive;
+    background: transparent; color: var(--chalk);
+    border: 1.5px dashed var(--chalk-dim); border-radius: 20px;
+    padding: 7px 13px; font-size: 0.82rem; cursor: pointer;
+  }
+  .examples button:hover { border-color: var(--control); color: var(--control); }
+
+  .note { margin-top: 18px; font-size: 0.88rem; line-height: 1.55; color: var(--chalk-dim);
+    border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 14px; }
+  .note b { color: var(--chalk); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Price Controls: Ceilings &amp; Floors</h1>
+    <p>Set a legal price and see whether the market clears — or creates a shortage or surplus</p>
+  </header>
+
+  <div class="board">
+    <canvas id="chart" width="720" height="440"></canvas>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--demand)"></i>Demand</span>
+      <span><i class="dot" style="background:var(--supply)"></i>Supply</span>
+      <span><i class="dot" style="background:var(--control)"></i>Control price</span>
+      <span><i class="sq" style="background:var(--dwl);opacity:0.5"></i>Deadweight loss</span>
+    </div>
+
+    <div class="readout">
+      <div><span>Equilibrium price</span><b id="p0Val">--</b></div>
+      <div><span>Control price</span><b id="pcVal" style="color:var(--control)">--</b></div>
+      <div><span>Quantity demanded</span><b id="qdVal" style="color:var(--demand)">--</b></div>
+      <div><span>Quantity supplied</span><b id="qsVal" style="color:var(--supply)">--</b></div>
+      <div><span>Deadweight loss</span><b id="dwlVal" style="color:var(--dwl)">--</b></div>
+    </div>
+
+    <span class="badge" id="statusBadge">--</span>
+
+    <div class="toggle">
+      <button id="btnCeiling" class="active ceiling">Price Ceiling</button>
+      <button id="btnFloor" class="floor">Price Floor</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="examples">
+      <button data-type="ceiling" data-p="35">Rent control</button>
+      <button data-type="ceiling" data-p="50">Gas price cap</button>
+      <button data-type="floor" data-p="70">Minimum wage</button>
+      <button data-type="floor" data-p="65">Agricultural price support</button>
+    </div>
+
+    <div class="control">
+      <label>Control price <b id="v-price">40</b></label>
+      <div class="hint">A ceiling below equilibrium or a floor above it is <b>binding</b> — set it on the "wrong" side of equilibrium and it stops doing anything</div>
+      <input type="range" id="controlPrice" min="1" max="99" value="40" step="1">
+    </div>
+    <div class="control">
+      <label>Demand steepness <b id="v-dSteep">1.0</b></label>
+      <input type="range" id="demandSteep" min="0.4" max="3" value="1" step="0.1">
+    </div>
+    <div class="control">
+      <label>Supply steepness <b id="v-sSteep">1.0</b></label>
+      <input type="range" id="supplySteep" min="0.4" max="3" value="1" step="0.1">
+    </div>
+  </div>
+
+  <div class="note">
+    <b>How to read it:</b> at the control price, quantity demanded and quantity supplied usually
+    differ — the market can only trade the <b>smaller</b> of the two. A binding <b>ceiling</b>
+    (like rent control) sets quantity supplied below quantity demanded, causing a
+    <b>shortage</b>. A binding <b>floor</b> (like minimum wage) sets quantity demanded below
+    quantity supplied, causing a <b>surplus</b>. Either way, trade below the free-market quantity
+    creates a deadweight loss — value that would have been created by trades that no longer happen.
+  </div>
+</div>
+
+<script>
+const A = 100; // demand price-axis intercept
+const C = 10;  // supply price-axis intercept
+
+let controlType = 'ceiling';
+
+function getVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+// ---- CANVAS ----
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const pad = 48;
+const QMAX_VIEW = 100, PMAX_VIEW = 110;
+
+function toX(q) { return pad + (q / QMAX_VIEW) * (W - pad * 2); }
+function toY(p) { return H - pad - (p / PMAX_VIEW) * (H - pad * 2); }
+function seededJitter(i) { return Math.sin(i * 12.9898) * 0.7; }
+
+function drawAxes() {
+  ctx.strokeStyle = 'rgba(244,241,230,0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pad, pad); ctx.lineTo(pad, H - pad); ctx.lineTo(W - pad, H - pad);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(244,241,230,0.6)';
+  ctx.font = "14px 'Architects Daughter', cursive";
+  ctx.fillText('Quantity', W - pad - 66, H - pad + 26);
+  ctx.save();
+  ctx.translate(pad - 30, pad + 30);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Price', 0, 0);
+  ctx.restore();
+}
+
+function drawLine(pFn, color, jitterSeed) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  let started = false, i = 0;
+  for (let q = 0; q <= QMAX_VIEW; q += 2) {
+    const p = pFn(q);
+    if (p < -5 || p > PMAX_VIEW + 5) { i++; continue; }
+    const x = toX(q) + seededJitter(i + jitterSeed);
+    const y = toY(p) + seededJitter(i * 2 + jitterSeed);
+    if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+    i++;
+  }
+  ctx.stroke();
+}
+
+function render() {
+  const pc = Number(document.getElementById('controlPrice').value);
+  const bD = Number(document.getElementById('demandSteep').value);
+  const bS = Number(document.getElementById('supplySteep').value);
+  document.getElementById('v-price').textContent = pc;
+  document.getElementById('v-dSteep').textContent = bD.toFixed(1);
+  document.getElementById('v-sSteep').textContent = bS.toFixed(1);
+
+  const demandP = q => A - bD * q;
+  const supplyP = q => C + bS * q;
+  const demandQ = p => Math.max(0, (A - p) / bD);
+  const supplyQ = p => Math.max(0, (p - C) / bS);
+
+  const q0 = (A - C) / (bD + bS);
+  const p0 = demandP(q0);
+
+  const binding = (controlType === 'ceiling' && pc < p0) || (controlType === 'floor' && pc > p0);
+
+  let qd, qs, qTraded, dwl;
+  if (binding) {
+    qd = demandQ(pc);
+    qs = supplyQ(pc);
+    qTraded = Math.min(qd, qs);
+    dwl = 0.5 * Math.abs(qd - qTraded > qs - qTraded ? qd - qTraded : qs - qTraded) * Math.abs(demandP(qTraded) - supplyP(qTraded));
+    // simpler and exact: triangle between qTraded and q0
+    dwl = 0.5 * (q0 - qTraded) * (demandP(qTraded) - supplyP(qTraded));
+  } else {
+    qd = q0; qs = q0; qTraded = q0; dwl = 0;
+  }
+
+  ctx.clearRect(0, 0, W, H);
+  drawAxes();
+
+  // deadweight loss triangle
+  if (binding && qTraded < q0) {
+    ctx.fillStyle = getVar('--dwl');
+    ctx.globalAlpha = 0.35;
+    ctx.beginPath();
+    ctx.moveTo(toX(qTraded), toY(demandP(qTraded)));
+    ctx.lineTo(toX(qTraded), toY(supplyP(qTraded)));
+    ctx.lineTo(toX(q0), toY(p0));
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // demand & supply curves
+  drawLine(demandP, getVar('--demand'), 0);
+  drawLine(supplyP, getVar('--supply'), 50);
+
+  // control price horizontal line
+  if (binding) {
+    ctx.strokeStyle = getVar('--control');
+    ctx.lineWidth = 2.2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(pad, toY(pc));
+    ctx.lineTo(W - pad, toY(pc));
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // shortage/surplus gap marker along the control-price line
+    ctx.strokeStyle = getVar('--chalk');
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(toX(Math.min(qd, qs)), toY(pc));
+    ctx.lineTo(toX(Math.max(qd, qs)), toY(pc));
+    ctx.stroke();
+  }
+
+  // markers
+  function marker(q, p, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(toX(q), toY(p), 5.5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+  marker(q0, p0, getVar('--chalk-dim'));
+  if (binding) {
+    marker(qd, pc, getVar('--demand'));
+    marker(qs, pc, getVar('--supply'));
+  }
+
+  // readouts
+  document.getElementById('p0Val').textContent = p0.toFixed(1);
+  document.getElementById('pcVal').textContent = pc.toFixed(0);
+  document.getElementById('qdVal').textContent = qd.toFixed(1);
+  document.getElementById('qsVal').textContent = qs.toFixed(1);
+  document.getElementById('dwlVal').textContent = dwl.toFixed(0);
+
+  const badge = document.getElementById('statusBadge');
+  if (!binding) {
+    badge.textContent = 'Not binding — market clears at equilibrium';
+    badge.style.background = 'rgba(207,214,201,0.15)';
+    badge.style.color = 'var(--chalk-dim)';
+    badge.style.border = '1px solid rgba(207,214,201,0.3)';
+  } else if (controlType === 'ceiling') {
+    const shortage = qd - qs;
+    badge.textContent = `Binding ceiling — shortage of ${shortage.toFixed(1)} units`;
+    badge.style.background = 'rgba(143,184,222,0.18)';
+    badge.style.color = 'var(--control)';
+    badge.style.border = '1px solid var(--control)';
+  } else {
+    const surplus = qs - qd;
+    badge.textContent = `Binding floor — surplus of ${surplus.toFixed(1)} units`;
+    badge.style.background = 'rgba(232,146,124,0.18)';
+    badge.style.color = 'var(--supply)';
+    badge.style.border = '1px solid var(--supply)';
+  }
+}
+
+document.getElementById('controlPrice').addEventListener('input', render);
+document.getElementById('demandSteep').addEventListener('input', render);
+document.getElementById('supplySteep').addEventListener('input', render);
+
+document.getElementById('btnCeiling').addEventListener('click', () => {
+  controlType = 'ceiling';
+  document.getElementById('btnCeiling').classList.add('active');
+  document.getElementById('btnFloor').classList.remove('active');
+  render();
+});
+document.getElementById('btnFloor').addEventListener('click', () => {
+  controlType = 'floor';
+  document.getElementById('btnFloor').classList.add('active');
+  document.getElementById('btnCeiling').classList.remove('active');
+  render();
+});
+
+document.querySelectorAll('.examples button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    controlType = btn.dataset.type;
+    document.getElementById('controlPrice').value = btn.dataset.p;
+    if (controlType === 'ceiling') {
+      document.getElementById('btnCeiling').classList.add('active');
+      document.getElementById('btnFloor').classList.remove('active');
+    } else {
+      document.getElementById('btnFloor').classList.add('active');
+      document.getElementById('btnCeiling').classList.remove('active');
+    }
+    render();
+  });
+});
+
+render();
+</script>
+</body>
+</html>

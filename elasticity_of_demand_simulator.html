@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Price Elasticity of Demand Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Architects+Daughter&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --board: #1e3a2e; --frame: #6b4a32;
+    --chalk: #f4f1e6; --chalk-dim: #cfd6c9;
+    --demand: #f2c94c; --revenue: #8fb8de; --p2: #e8927c;
+    --shadow: rgba(0,0,0,0.35);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: #0d1a14;
+    background-image: radial-gradient(circle at 20% 10%, #16291f 0%, #0d1a14 60%);
+    color: var(--chalk); font-family: 'Architects Daughter', cursive;
+    padding: 28px 14px 60px;
+  }
+  .wrap { max-width: 800px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 20px; }
+  h1 { font-family: 'Kalam', cursive; font-weight: 700; font-size: clamp(1.4rem, 4vw, 2rem); margin: 0 0 6px; }
+  header p { color: var(--chalk-dim); font-size: 0.93rem; margin: 0; }
+
+  .board {
+    background: var(--board); border: 14px solid var(--frame); border-radius: 6px;
+    box-shadow: 0 20px 40px var(--shadow), inset 0 0 60px rgba(0,0,0,0.3); padding: 20px;
+  }
+  canvas { width: 100%; height: auto; display: block; }
+  .legend { display: flex; gap: 16px; justify-content: center; margin-top: 10px; font-size: 0.8rem; color: var(--chalk-dim); flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .sq { width: 11px; height: 11px; display: inline-block; }
+
+  .readout {
+    display: flex; gap: 22px; justify-content: center; margin-top: 16px; flex-wrap: wrap;
+    font-family: 'Kalam', cursive; font-size: 0.95rem;
+  }
+  .readout div span:first-child { color: var(--chalk-dim); font-size: 0.78rem; display: block; }
+  .readout b { font-size: 1.25rem; }
+  .badge {
+    display: inline-block; margin-top: 8px; padding: 5px 16px; border-radius: 20px;
+    font-family: 'Kalam', cursive; font-size: 0.9rem; font-weight: 700;
+  }
+
+  .formula-box {
+    background: rgba(0,0,0,0.22); border: 1px dashed rgba(255,255,255,0.2);
+    border-radius: 10px; padding: 16px 18px; margin-top: 18px;
+    font-family: 'Kalam', cursive; font-size: 1rem; line-height: 2;
+    text-align: center;
+  }
+  .formula-box .frac { display: inline-block; vertical-align: middle; text-align: center; margin: 0 6px; }
+  .formula-box .frac span { display: block; padding: 0 4px; }
+  .formula-box .frac .top { border-bottom: 1.5px solid var(--chalk); }
+  .formula-box small { display: block; color: var(--chalk-dim); font-family: 'Architects Daughter', cursive; font-size: 0.8rem; margin-top: 4px; }
+
+  .panel {
+    background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 18px 20px; margin-top: 18px;
+  }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .presets button {
+    font-family: 'Architects Daughter', cursive;
+    background: transparent; color: var(--chalk);
+    border: 1.5px dashed var(--chalk-dim); border-radius: 20px;
+    padding: 7px 13px; font-size: 0.82rem; cursor: pointer;
+  }
+  .presets button:hover { border-color: var(--p2); color: var(--p2); }
+
+  .control { margin-bottom: 14px; }
+  .control:last-child { margin-bottom: 0; }
+  .control label { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--chalk-dim); margin-bottom: 4px; }
+  .control label b { color: var(--chalk); }
+  .control .hint { font-size: 0.75rem; color: rgba(207,214,201,0.6); margin-bottom: 6px; }
+  input[type=range] { width: 100%; -webkit-appearance: none; height: 4px; background: rgba(255,255,255,0.25); border-radius: 2px; outline: none; accent-color: var(--demand); }
+
+  .cases {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 10px;
+    margin-top: 18px;
+  }
+  .case {
+    background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 10px 12px; font-size: 0.8rem; text-align: center;
+  }
+  .case b { display: block; font-family: 'Kalam', cursive; font-size: 0.95rem; margin-bottom: 2px; }
+  .case span { color: var(--chalk-dim); font-size: 0.72rem; }
+
+  .note { margin-top: 18px; font-size: 0.88rem; line-height: 1.55; color: var(--chalk-dim);
+    border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 14px; }
+  .note b { color: var(--chalk); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Price Elasticity of Demand</h1>
+    <p>Slide along a straight-line demand curve and watch elasticity move through all five cases</p>
+  </header>
+
+  <div class="board">
+    <canvas id="chart" width="700" height="440"></canvas>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--demand)"></i>Demand curve</span>
+      <span><i class="dot" style="background:var(--p2)"></i>Current point</span>
+      <span><i class="sq" style="background:var(--revenue);opacity:0.5"></i>Revenue (P×Q)</span>
+    </div>
+
+    <div class="readout">
+      <div><span>Elasticity (Ed)</span><b id="elasVal">--</b></div>
+      <div><span>Price (P)</span><b id="pVal">--</b></div>
+      <div><span>Quantity (Q)</span><b id="qVal">--</b></div>
+      <div><span>Revenue (P×Q)</span><b id="revVal">--</b></div>
+    </div>
+    <div style="text-align:center"><span class="badge" id="classify">--</span></div>
+  </div>
+
+  <div class="formula-box">
+    Eḏ &nbsp;=&nbsp;
+    <span class="frac"><span class="top">% Δ Quantity Demanded</span><span>% Δ Price</span></span>
+    <small>general definition</small>
+  </div>
+
+  <div class="panel">
+    <div class="presets">
+      <button data-a="100" data-p="1">Eḏ = 0</button>
+      <button data-a="100" data-p="25">Eḏ &lt; 1</button>
+      <button data-a="100" data-p="50">Eḏ = 1</button>
+      <button data-a="100" data-p="75">Eḏ &gt; 1</button>
+      <button data-a="100" data-p="99">Eḏ = ∞</button>
+    </div>
+    <div class="control">
+      <label>Price-axis intercept (a) <b id="v-a">100</b></label>
+      <div class="hint">The price at which quantity demanded falls to zero — where the curve meets the price axis</div>
+      <input type="range" id="intercept" min="40" max="160" value="100" step="1">
+    </div>
+    <div class="control">
+      <label>Price (P) <b id="v-price">50</b></label>
+      <div class="hint">Move along the demand curve — low price toward the quantity axis, high price toward the price axis</div>
+      <input type="range" id="price" min="1" max="159" value="50" step="1">
+    </div>
+    <div class="control">
+      <label>Curve steepness (visual only) <b id="v-slope">1.0</b></label>
+      <div class="hint">Changes how the curve looks, but not its elasticity at a given price — try it and watch Eḏ stay put</div>
+      <input type="range" id="slope" min="0.3" max="3" value="1" step="0.1">
+    </div>
+  </div>
+
+  <div class="cases">
+    <div class="case"><b>Eḏ = 0</b><span>Perfectly inelastic — quantity doesn't respond at all</span></div>
+    <div class="case"><b>0 &lt; Eḏ &lt; 1</b><span>Inelastic — quantity responds less than price</span></div>
+    <div class="case"><b>Eḏ = 1</b><span>Unit elastic — quantity responds proportionally</span></div>
+    <div class="case"><b>Eḏ &gt; 1</b><span>Elastic — quantity responds more than price</span></div>
+    <div class="case"><b>Eḏ = ∞</b><span>Perfectly elastic — any price rise drops quantity to zero</span></div>
+  </div>
+
+  <div class="note">
+    <b>How to read it:</b> on any straight demand line, the top half (near the price-axis
+    intercept) is elastic, the exact midpoint is unit elastic, and the bottom half (near the
+    quantity-axis) is inelastic. Where demand is elastic, raising price <i>lowers</i> revenue;
+    where it's inelastic, raising price <i>raises</i> revenue — that's why the revenue rectangle
+    grows and shrinks as you slide.
+  </div>
+</div>
+
+<script>
+// ---- MODEL: linear demand P = a - b*Q ----
+function qFromP(p, a, slope) { return Math.max(0, (a - p) / slope); }
+function elasticity(p, a) { return p / (a - p); } // exact point elasticity magnitude, slope cancels
+
+// ---- CANVAS ----
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const pad = 48;
+const QMAX_VIEW = 140, PMAX_VIEW = 110;
+
+function toX(q) { return pad + (q / QMAX_VIEW) * (W - pad * 2); }
+function toY(p) { return H - pad - (p / PMAX_VIEW) * (H - pad * 2); }
+function seededJitter(i) { return Math.sin(i * 12.9898) * 0.8; }
+function getVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+function drawAxes() {
+  ctx.strokeStyle = 'rgba(244,241,230,0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pad, pad); ctx.lineTo(pad, H - pad); ctx.lineTo(W - pad, H - pad);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(244,241,230,0.6)';
+  ctx.font = "14px 'Architects Daughter', cursive";
+  ctx.fillText('Quantity', W - pad - 66, H - pad + 26);
+  ctx.save();
+  ctx.translate(pad - 30, pad + 30);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Price', 0, 0);
+  ctx.restore();
+}
+
+// draw curve with two colored zones split at the midpoint (a/2), the unit-elastic point
+function drawCurve(a, slope) {
+  ctx.lineWidth = 3.2;
+  ctx.lineCap = 'round';
+
+  const mid = a / 2;
+  // inelastic half: P from just above 0 to the midpoint
+  drawSegment(1, mid, a, slope, getVar('--p2'));
+  // elastic half: P from midpoint to just below a
+  drawSegment(mid, a - 1, a, slope, getVar('--revenue'));
+
+  // mark unit-elastic point
+  const qm = qFromP(mid, a, slope);
+  if (qm <= QMAX_VIEW) {
+    const xm = toX(qm), ym = toY(mid);
+    ctx.fillStyle = getVar('--demand');
+    ctx.beginPath(); ctx.arc(xm, ym, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = getVar('--chalk-dim');
+    ctx.font = "12px 'Architects Daughter', cursive";
+    ctx.fillText('Eḏ = 1', xm + 8, ym + 14);
+  }
+}
+
+function drawSegment(pStart, pEnd, a, slope, color) {
+  ctx.strokeStyle = color;
+  ctx.beginPath();
+  let started = false, i = 0;
+  for (let p = pStart; p <= pEnd; p += 1) {
+    const q = qFromP(p, a, slope);
+    if (q > QMAX_VIEW) { i++; continue; }
+    const x = toX(q) + seededJitter(i);
+    const y = toY(p) + seededJitter(i * 2);
+    if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+    i++;
+  }
+  ctx.stroke();
+}
+
+function drawPoint(q, p, color) {
+  const x = toX(q), y = toY(p);
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(x, y, 6.5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.2; ctx.stroke();
+  ctx.strokeStyle = color + '99';
+  ctx.setLineDash([4, 4]); ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(x, H - pad); ctx.lineTo(x, y); ctx.lineTo(pad, y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawRevenueBox(q, p) {
+  const x0 = toX(0), y0 = toY(0);
+  const x = toX(q), y = toY(p);
+  ctx.fillStyle = getVar('--revenue');
+  ctx.globalAlpha = 0.22;
+  ctx.fillRect(x0, y, x - x0, y0 - y);
+  ctx.globalAlpha = 1;
+}
+
+function render() {
+  const a = Number(document.getElementById('intercept').value);
+  const slope = Number(document.getElementById('slope').value);
+  let p = Number(document.getElementById('price').value);
+  if (p >= a) p = a - 1; // keep price valid for this curve
+  if (p < 0) p = 0;
+  document.getElementById('price').value = p;
+  document.getElementById('v-a').textContent = a;
+  document.getElementById('v-slope').textContent = slope.toFixed(1);
+  document.getElementById('v-price').textContent = p;
+
+  const q = qFromP(p, a, slope);
+  const ed = elasticity(p, a);
+
+  ctx.clearRect(0, 0, W, H);
+  drawAxes();
+  drawRevenueBox(q, p);
+  drawCurve(a, slope);
+  drawPoint(q, p, getVar('--p2'));
+
+  document.getElementById('pVal').textContent = p.toFixed(0);
+  document.getElementById('qVal').textContent = q.toFixed(1);
+  document.getElementById('revVal').textContent = (p * q).toFixed(0);
+  document.getElementById('elasVal').textContent = ed > 30 ? '→ ∞' : ed.toFixed(2);
+
+  const badge = document.getElementById('classify');
+  let label, bg;
+  if (p <= 1) { label = 'Perfectly Inelastic (Eḏ = 0)'; bg = '#e8927c'; }
+  else if (ed > 30) { label = 'Perfectly Elastic (Eḏ → ∞)'; bg = '#8fb8de'; }
+  else if (ed > 1.03) { label = 'Elastic (Eḏ > 1)'; bg = '#8fb8de'; }
+  else if (ed < 0.97) { label = 'Inelastic (Eḏ < 1)'; bg = '#e8927c'; }
+  else { label = 'Unit Elastic (Eḏ = 1)'; bg = '#f2c94c'; }
+  badge.textContent = label;
+  badge.style.background = bg + '33';
+  badge.style.color = bg;
+  badge.style.border = '1px solid ' + bg;
+}
+
+document.getElementById('intercept').addEventListener('input', render);
+document.getElementById('slope').addEventListener('input', render);
+document.getElementById('price').addEventListener('input', render);
+document.querySelectorAll('.presets button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('intercept').value = btn.dataset.a;
+    document.getElementById('price').value = btn.dataset.p;
+    render();
+  });
+});
+
+render();
+</script>
+</body>
+</html>

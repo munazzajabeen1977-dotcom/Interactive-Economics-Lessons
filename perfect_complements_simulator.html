@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perfect Complements: Indifference Curves &amp; Budget Line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Architects+Daughter&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --board: #1e3a2e; --frame: #6b4a32;
+    --chalk: #f4f1e6; --chalk-dim: #cfd6c9;
+    --budget: #8fb8de; --indiff: #f2c94c; --opt: #e8927c; --ray: #c98fde;
+    --shadow: rgba(0,0,0,0.35);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: #0d1a14;
+    background-image: radial-gradient(circle at 20% 10%, #16291f 0%, #0d1a14 60%);
+    color: var(--chalk); font-family: 'Architects Daughter', cursive;
+    padding: 28px 14px 60px;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 20px; }
+  h1 { font-family: 'Kalam', cursive; font-weight: 700; font-size: clamp(1.4rem, 4vw, 2rem); margin: 0 0 6px; }
+  header p { color: var(--chalk-dim); font-size: 0.93rem; margin: 0; }
+
+  .board {
+    background: var(--board); border: 14px solid var(--frame); border-radius: 6px;
+    box-shadow: 0 20px 40px var(--shadow), inset 0 0 60px rgba(0,0,0,0.3); padding: 20px;
+  }
+  canvas { width: 100%; height: auto; display: block; }
+  .legend { display: flex; gap: 14px; justify-content: center; margin-top: 10px; font-size: 0.78rem; color: var(--chalk-dim); flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+
+  .readout {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(110px,1fr)); gap: 14px;
+    margin-top: 18px; font-family: 'Kalam', cursive;
+  }
+  .readout div { text-align: center; }
+  .readout div span:first-child { color: var(--chalk-dim); font-size: 0.72rem; display: block; }
+  .readout b { font-size: 1.1rem; }
+
+  .panel {
+    background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 18px 20px; margin-top: 18px;
+  }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .presets button {
+    font-family: 'Architects Daughter', cursive;
+    background: transparent; color: var(--chalk);
+    border: 1.5px dashed var(--chalk-dim); border-radius: 20px;
+    padding: 7px 13px; font-size: 0.82rem; cursor: pointer;
+  }
+  .presets button:hover { border-color: var(--opt); color: var(--opt); }
+
+  .control { margin-bottom: 14px; }
+  .control:last-child { margin-bottom: 0; }
+  .control label { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--chalk-dim); margin-bottom: 4px; }
+  .control label b { color: var(--chalk); }
+  .control .hint { font-size: 0.75rem; color: rgba(207,214,201,0.6); margin-bottom: 6px; }
+  input[type=range] { width: 100%; -webkit-appearance: none; height: 4px; background: rgba(255,255,255,0.25); border-radius: 2px; outline: none; }
+  #income { accent-color: var(--budget); }
+  #priceX { accent-color: var(--opt); }
+  #priceY { accent-color: var(--opt); }
+  #ratioA { accent-color: var(--indiff); }
+  #ratioB { accent-color: var(--indiff); }
+
+  .note { margin-top: 18px; font-size: 0.88rem; line-height: 1.55; color: var(--chalk-dim);
+    border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 14px; }
+  .note b { color: var(--chalk); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Perfect Complements</h1>
+    <p>Goods consumed in a fixed ratio — like left shoes and right shoes — always meet at the same corner</p>
+  </header>
+
+  <div class="board">
+    <canvas id="chart" width="700" height="440"></canvas>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--budget)"></i>Budget line</span>
+      <span><i class="dot" style="background:var(--indiff)"></i>Indifference curves (L-shaped)</span>
+      <span><i class="dot" style="background:var(--ray)"></i>Fixed-ratio expansion path</span>
+      <span><i class="dot" style="background:var(--opt)"></i>Optimal bundle</span>
+    </div>
+
+    <div class="readout">
+      <div><span>Good X (X*)</span><b id="xVal">--</b></div>
+      <div><span>Good Y (Y*)</span><b id="yVal">--</b></div>
+      <div><span>Batches (N*)</span><b id="nVal">--</b></div>
+      <div><span>Cost per batch</span><b id="costVal">--</b></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="presets">
+      <button data-m="120" data-px="4" data-py="4" data-ra="1" data-rb="1">Reset (1:1 ratio)</button>
+      <button data-m="120" data-px="4" data-py="4" data-ra="2" data-rb="1">2 X per 1 Y</button>
+      <button data-m="240" data-px="4" data-py="4" data-ra="1" data-rb="1">Income rises</button>
+      <button data-m="120" data-px="10" data-py="4" data-ra="1" data-rb="1">Price of X rises</button>
+    </div>
+
+    <div class="control">
+      <label>Income (M) <b id="v-income">120</b></label>
+      <input type="range" id="income" min="40" max="240" value="120" step="5">
+    </div>
+    <div class="control">
+      <label>Price of X (Px) <b id="v-px">4</b></label>
+      <input type="range" id="priceX" min="1" max="12" value="4" step="0.5">
+    </div>
+    <div class="control">
+      <label>Price of Y (Py) <b id="v-py">4</b></label>
+      <input type="range" id="priceY" min="1" max="12" value="4" step="0.5">
+    </div>
+    <div class="control">
+      <label>Units of X per batch (α) <b id="v-ra">1</b></label>
+      <div class="hint">The fixed recipe — e.g. 1 left shoe needs exactly this many right shoes</div>
+      <input type="range" id="ratioA" min="0.5" max="4" value="1" step="0.5">
+    </div>
+    <div class="control">
+      <label>Units of Y per batch (β) <b id="v-rb">1</b></label>
+      <input type="range" id="ratioB" min="0.5" max="4" value="1" step="0.5">
+    </div>
+  </div>
+
+  <div class="note">
+    <b>How to read it:</b> the indifference curves are L-shaped, kinked exactly along a ray from
+    the origin where X/α = Y/β. Since more of only one good adds no utility without the other,
+    the optimal bundle always sits <b>on that ray</b> — try changing prices and watch the point
+    slide along it rather than substituting toward the cheaper good. With perfect complements
+    there's no substitution effect at all; a price change only produces an income effect.
+  </div>
+</div>
+
+<script>
+function getVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+// ---- CANVAS ----
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const pad = 48;
+
+let viewMaxX = 40, viewMaxY = 40;
+function toX(x) { return pad + (x / viewMaxX) * (W - pad * 2); }
+function toY(y) { return H - pad - (y / viewMaxY) * (H - pad * 2); }
+
+function drawAxes() {
+  ctx.strokeStyle = 'rgba(244,241,230,0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pad, pad); ctx.lineTo(pad, H - pad); ctx.lineTo(W - pad, H - pad);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(244,241,230,0.6)';
+  ctx.font = "14px 'Architects Daughter', cursive";
+  ctx.fillText('Good X', W - pad - 60, H - pad + 26);
+  ctx.save();
+  ctx.translate(pad - 30, pad + 30);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Good Y', 0, 0);
+  ctx.restore();
+}
+
+function drawBudgetLine(m, px, py) {
+  ctx.strokeStyle = getVar('--budget');
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  const xMax = m / px, yMax = m / py;
+  ctx.beginPath();
+  ctx.moveTo(toX(0), toY(yMax));
+  ctx.lineTo(toX(xMax), toY(0));
+  ctx.stroke();
+}
+
+// L-shaped indifference curve: kink at (alpha*n, beta*n)
+function drawLCurve(n, alpha, beta, color, bold) {
+  const kx = alpha * n, ky = beta * n;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = bold ? 3 : 1.6;
+  if (!bold) ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  ctx.moveTo(toX(kx), toY(viewMaxY));   // vertical arm going up from the kink
+  ctx.lineTo(toX(kx), toY(ky));
+  ctx.lineTo(toX(viewMaxX), toY(ky));   // horizontal arm going right from the kink
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawRay(alpha, beta) {
+  ctx.strokeStyle = getVar('--ray');
+  ctx.lineWidth = 1.6;
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.moveTo(toX(0), toY(0));
+  // extend ray to the edge of the view
+  const tX = viewMaxX, tY = (beta / alpha) * viewMaxX;
+  if (tY <= viewMaxY) {
+    ctx.lineTo(toX(tX), toY(tY));
+  } else {
+    const tX2 = (alpha / beta) * viewMaxY;
+    ctx.lineTo(toX(tX2), toY(viewMaxY));
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function render() {
+  const m = Number(document.getElementById('income').value);
+  const px = Number(document.getElementById('priceX').value);
+  const py = Number(document.getElementById('priceY').value);
+  const alpha = Number(document.getElementById('ratioA').value);
+  const beta = Number(document.getElementById('ratioB').value);
+  document.getElementById('v-income').textContent = m;
+  document.getElementById('v-px').textContent = px;
+  document.getElementById('v-py').textContent = py;
+  document.getElementById('v-ra').textContent = alpha;
+  document.getElementById('v-rb').textContent = beta;
+
+  // fixed-proportion optimum: N batches, X=alpha*N, Y=beta*N, cost = N*(alpha*px+beta*py) = m
+  const costPerBatch = alpha * px + beta * py;
+  const nOpt = m / costPerBatch;
+  const xOpt = alpha * nOpt;
+  const yOpt = beta * nOpt;
+
+  viewMaxX = Math.max(m / px, xOpt) * 1.25;
+  viewMaxY = Math.max(m / py, yOpt) * 1.25;
+
+  ctx.clearRect(0, 0, W, H);
+  drawAxes();
+
+  drawRay(alpha, beta);
+
+  drawLCurve(nOpt * 0.6, alpha, beta, 'rgba(242,201,76,0.45)', false);
+  drawLCurve(nOpt * 1.4, alpha, beta, 'rgba(242,201,76,0.45)', false);
+  drawLCurve(nOpt, alpha, beta, getVar('--indiff'), true);
+
+  drawBudgetLine(m, px, py);
+
+  ctx.fillStyle = getVar('--opt');
+  ctx.beginPath(); ctx.arc(toX(xOpt), toY(yOpt), 6.5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.2; ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(244,241,230,0.3)';
+  ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(toX(xOpt), H - pad); ctx.lineTo(toX(xOpt), toY(yOpt));
+  ctx.lineTo(pad, toY(yOpt));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  document.getElementById('xVal').textContent = xOpt.toFixed(1);
+  document.getElementById('yVal').textContent = yOpt.toFixed(1);
+  document.getElementById('nVal').textContent = nOpt.toFixed(1);
+  document.getElementById('costVal').textContent = costPerBatch.toFixed(1);
+}
+
+document.getElementById('income').addEventListener('input', render);
+document.getElementById('priceX').addEventListener('input', render);
+document.getElementById('priceY').addEventListener('input', render);
+document.getElementById('ratioA').addEventListener('input', render);
+document.getElementById('ratioB').addEventListener('input', render);
+
+document.querySelectorAll('.presets button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('income').value = btn.dataset.m;
+    document.getElementById('priceX').value = btn.dataset.px;
+    document.getElementById('priceY').value = btn.dataset.py;
+    document.getElementById('ratioA').value = btn.dataset.ra;
+    document.getElementById('ratioB').value = btn.dataset.rb;
+    render();
+  });
+});
+
+render();
+</script>
+</body>
+</html>

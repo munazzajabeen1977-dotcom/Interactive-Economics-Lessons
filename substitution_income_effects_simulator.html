@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Substitution &amp; Income Effects of a Price Change</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Architects+Daughter&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --board: #1e3a2e; --frame: #6b4a32;
+    --chalk: #f4f1e6; --chalk-dim: #cfd6c9;
+    --original: #8fb8de; --compensated: #c98fde; --newp: #e8927c; --indiff: #f2c94c;
+    --shadow: rgba(0,0,0,0.35);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: #0d1a14;
+    background-image: radial-gradient(circle at 20% 10%, #16291f 0%, #0d1a14 60%);
+    color: var(--chalk); font-family: 'Architects Daughter', cursive;
+    padding: 28px 14px 60px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 20px; }
+  h1 { font-family: 'Kalam', cursive; font-weight: 700; font-size: clamp(1.3rem, 4vw, 1.9rem); margin: 0 0 6px; }
+  header p { color: var(--chalk-dim); font-size: 0.93rem; margin: 0; }
+
+  .board {
+    background: var(--board); border: 14px solid var(--frame); border-radius: 6px;
+    box-shadow: 0 20px 40px var(--shadow), inset 0 0 60px rgba(0,0,0,0.3); padding: 20px;
+  }
+  canvas { width: 100%; height: auto; display: block; }
+  .legend { display: flex; gap: 12px; justify-content: center; margin-top: 10px; font-size: 0.75rem; color: var(--chalk-dim); flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .readout {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 12px;
+    margin-top: 18px; font-family: 'Kalam', cursive;
+  }
+  .readout div { text-align: center; }
+  .readout div span:first-child { color: var(--chalk-dim); font-size: 0.7rem; display: block; }
+  .readout b { font-size: 1.05rem; }
+
+  .effects {
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 16px;
+  }
+  .effect-box {
+    text-align: center; padding: 10px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2);
+  }
+  .effect-box .lbl { font-size: 0.72rem; color: var(--chalk-dim); }
+  .effect-box b { display: block; font-family: 'Kalam', cursive; font-size: 1.1rem; margin-top: 3px; }
+
+  .panel {
+    background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 18px 20px; margin-top: 18px;
+  }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .presets button {
+    font-family: 'Architects Daughter', cursive;
+    background: transparent; color: var(--chalk);
+    border: 1.5px dashed var(--chalk-dim); border-radius: 20px;
+    padding: 7px 13px; font-size: 0.82rem; cursor: pointer;
+  }
+  .presets button:hover { border-color: var(--newp); color: var(--newp); }
+
+  .control { margin-bottom: 14px; }
+  .control:last-child { margin-bottom: 0; }
+  .control label { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--chalk-dim); margin-bottom: 4px; }
+  .control label b { color: var(--chalk); }
+  input[type=range] { width: 100%; -webkit-appearance: none; height: 4px; background: rgba(255,255,255,0.25); border-radius: 2px; outline: none; }
+  #income { accent-color: var(--original); }
+  #priceX0 { accent-color: var(--original); }
+  #priceX1 { accent-color: var(--newp); }
+  #priceY { accent-color: var(--chalk-dim); }
+  #prefA { accent-color: var(--indiff); }
+
+  .note { margin-top: 18px; font-size: 0.88rem; line-height: 1.55; color: var(--chalk-dim);
+    border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 14px; }
+  .note b { color: var(--chalk); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Substitution &amp; Income Effects</h1>
+    <p>Split the effect of a price change into "relatively cheaper" and "effectively richer/poorer"</p>
+  </header>
+
+  <div class="board">
+    <canvas id="chart" width="740" height="460"></canvas>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--original)"></i>Original budget line</span>
+      <span><i class="dot" style="background:var(--compensated)"></i>Compensated budget line</span>
+      <span><i class="dot" style="background:var(--newp)"></i>New budget line</span>
+      <span><i class="dot" style="background:var(--indiff)"></i>Indifference curves</span>
+    </div>
+
+    <div class="readout">
+      <div><span>Original bundle</span><b id="orig">--</b></div>
+      <div><span>Substitution point</span><b id="sub">--</b></div>
+      <div><span>New bundle</span><b id="final">--</b></div>
+    </div>
+
+    <div class="effects">
+      <div class="effect-box"><span class="lbl">Substitution effect (ΔX)</span><b id="subEffect" style="color:var(--compensated)">--</b></div>
+      <div class="effect-box"><span class="lbl">Income effect (ΔX)</span><b id="incEffect" style="color:var(--newp)">--</b></div>
+      <div class="effect-box"><span class="lbl">Total effect (ΔX)</span><b id="totalEffect" style="color:var(--chalk)">--</b></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="presets">
+      <button data-m="120" data-px0="4" data-px1="2" data-py="4" data-a="0.5">Price of X falls</button>
+      <button data-m="120" data-px0="4" data-px1="8" data-py="4" data-a="0.5">Price of X rises</button>
+      <button data-m="120" data-px0="4" data-px1="2" data-py="4" data-a="0.8">Strong preference for X</button>
+      <button data-m="120" data-px0="4" data-px1="2" data-py="4" data-a="0.2">Weak preference for X</button>
+    </div>
+
+    <div class="control">
+      <label>Income (M) <b id="v-income">120</b></label>
+      <input type="range" id="income" min="60" max="240" value="120" step="5">
+    </div>
+    <div class="control">
+      <label>Original price of X <b id="v-px0">4</b></label>
+      <input type="range" id="priceX0" min="1" max="12" value="4" step="0.5">
+    </div>
+    <div class="control">
+      <label>New price of X <b id="v-px1">2</b></label>
+      <input type="range" id="priceX1" min="1" max="12" value="2" step="0.5">
+    </div>
+    <div class="control">
+      <label>Price of Y <b id="v-py">4</b></label>
+      <input type="range" id="priceY" min="1" max="12" value="4" step="0.5">
+    </div>
+    <div class="control">
+      <label>Preference for X (a) <b id="v-a">0.50</b></label>
+      <input type="range" id="prefA" min="0.1" max="0.9" value="0.5" step="0.05">
+    </div>
+  </div>
+
+  <div class="note">
+    <b>How to read it:</b> the <b>substitution effect</b> is the move from the original bundle to
+    a hypothetical point on the <i>same</i> indifference curve, priced at the <i>new</i> ratio
+    (the dashed compensated line) — it isolates the pure effect of X becoming relatively
+    cheaper or dearer, with satisfaction held constant. The <b>income effect</b> is the rest of
+    the move, from that hypothetical point to the actual new bundle on the new budget line — it
+    captures the change in real purchasing power. The two always add up to the total change in X.
+  </div>
+</div>
+
+<script>
+function getVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+// ---- CANVAS ----
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const pad = 50;
+
+let viewMaxX = 40, viewMaxY = 40;
+function toX(x) { return pad + (x / viewMaxX) * (W - pad * 2); }
+function toY(y) { return H - pad - (y / viewMaxY) * (H - pad * 2); }
+
+function drawAxes() {
+  ctx.strokeStyle = 'rgba(244,241,230,0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pad, pad); ctx.lineTo(pad, H - pad); ctx.lineTo(W - pad, H - pad);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(244,241,230,0.6)';
+  ctx.font = "13px 'Architects Daughter', cursive";
+  ctx.fillText('Good X', W - pad - 55, H - pad + 24);
+  ctx.save();
+  ctx.translate(pad - 32, pad + 30);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Good Y', 0, 0);
+  ctx.restore();
+}
+
+function drawBudgetLine(m, px, py, color, dashed) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = dashed ? 2 : 2.8;
+  ctx.lineCap = 'round';
+  if (dashed) ctx.setLineDash([6, 5]);
+  const xMax = m / px, yMax = m / py;
+  ctx.beginPath();
+  ctx.moveTo(toX(0), toY(yMax));
+  ctx.lineTo(toX(xMax), toY(0));
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawIndiffCurve(k, a, color, bold) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = bold ? 2.6 : 1.4;
+  if (!bold) ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  let started = false;
+  const xStart = viewMaxX * 0.02;
+  for (let x = xStart; x <= viewMaxX; x += viewMaxX / 100) {
+    const y = Math.pow(k / Math.pow(x, a), 1 / (1 - a));
+    if (!isFinite(y) || y > viewMaxY * 1.4 || y < 0) continue;
+    const jx = toX(x), jy = toY(y);
+    if (!started) { ctx.moveTo(jx, jy); started = true; } else ctx.lineTo(jx, jy);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function dot(x, y, color, r) {
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(toX(x), toY(y), r || 6, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1; ctx.stroke();
+}
+
+function arrow(x0, y0, x1, y1, color) {
+  const ax0 = toX(x0), ay0 = toY(y0), ax1 = toX(x1), ay1 = toY(y1);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(ax0, ay0); ctx.lineTo(ax1, ay1); ctx.stroke();
+  const angle = Math.atan2(ay1 - ay0, ax1 - ax0);
+  ctx.beginPath();
+  ctx.moveTo(ax1, ay1);
+  ctx.lineTo(ax1 - 8 * Math.cos(angle - 0.4), ay1 - 8 * Math.sin(angle - 0.4));
+  ctx.lineTo(ax1 - 8 * Math.cos(angle + 0.4), ay1 - 8 * Math.sin(angle + 0.4));
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function render() {
+  const m = Number(document.getElementById('income').value);
+  const px0 = Number(document.getElementById('priceX0').value);
+  const px1 = Number(document.getElementById('priceX1').value);
+  const py = Number(document.getElementById('priceY').value);
+  const a = Number(document.getElementById('prefA').value);
+  document.getElementById('v-income').textContent = m;
+  document.getElementById('v-px0').textContent = px0;
+  document.getElementById('v-px1').textContent = px1;
+  document.getElementById('v-py').textContent = py;
+  document.getElementById('v-a').textContent = a.toFixed(2);
+
+  // original optimum
+  const x0 = a * m / px0, y0 = (1 - a) * m / py;
+  const U0 = Math.pow(x0, a) * Math.pow(y0, 1 - a);
+
+  // new optimum (actual, at new price, original income)
+  const x1 = a * m / px1, y1 = (1 - a) * m / py;
+  const U1 = Math.pow(x1, a) * Math.pow(y1, 1 - a);
+
+  // compensated (Hicksian) bundle: cheapest way to reach U0 at new prices
+  const xc = U0 * Math.pow((a / (1 - a)) * (py / px1), 1 - a);
+  const yc = ((1 - a) / a) * (px1 / py) * xc;
+  const mc = px1 * xc + py * yc; // compensated income
+
+  viewMaxX = Math.max(m / px0, m / px1, mc / px1, x0, x1, xc) * 1.3;
+  viewMaxY = Math.max(m / py, mc / py, y0, y1, yc) * 1.3;
+
+  ctx.clearRect(0, 0, W, H);
+  drawAxes();
+
+  // indifference curves
+  drawIndiffCurve(U0, a, getVar('--indiff'), true);
+  drawIndiffCurve(U1, a, 'rgba(242,201,76,0.5)', false);
+
+  // budget lines
+  drawBudgetLine(m, px0, py, getVar('--original'), false);
+  drawBudgetLine(mc, px1, py, getVar('--compensated'), true);
+  drawBudgetLine(m, px1, py, getVar('--newp'), false);
+
+  // arrows for the two effects
+  arrow(x0, y0, xc, yc, getVar('--compensated'));
+  arrow(xc, yc, x1, y1, getVar('--newp'));
+
+  // points
+  dot(x0, y0, getVar('--original'));
+  dot(xc, yc, getVar('--compensated'));
+  dot(x1, y1, getVar('--newp'));
+
+  document.getElementById('orig').textContent = `(${x0.toFixed(1)}, ${y0.toFixed(1)})`;
+  document.getElementById('sub').textContent = `(${xc.toFixed(1)}, ${yc.toFixed(1)})`;
+  document.getElementById('final').textContent = `(${x1.toFixed(1)}, ${y1.toFixed(1)})`;
+
+  const subEffect = xc - x0;
+  const incEffect = x1 - xc;
+  const totalEffect = x1 - x0;
+
+  document.getElementById('subEffect').textContent = (subEffect >= 0 ? '+' : '') + subEffect.toFixed(2);
+  document.getElementById('incEffect').textContent = (incEffect >= 0 ? '+' : '') + incEffect.toFixed(2);
+  document.getElementById('totalEffect').textContent = (totalEffect >= 0 ? '+' : '') + totalEffect.toFixed(2);
+}
+
+document.getElementById('income').addEventListener('input', render);
+document.getElementById('priceX0').addEventListener('input', render);
+document.getElementById('priceX1').addEventListener('input', render);
+document.getElementById('priceY').addEventListener('input', render);
+document.getElementById('prefA').addEventListener('input', render);
+
+document.querySelectorAll('.presets button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('income').value = btn.dataset.m;
+    document.getElementById('priceX0').value = btn.dataset.px0;
+    document.getElementById('priceX1').value = btn.dataset.px1;
+    document.getElementById('priceY').value = btn.dataset.py;
+    document.getElementById('prefA').value = btn.dataset.a;
+    render();
+  });
+});
+
+render();
+</script>
+</body>
+</html>

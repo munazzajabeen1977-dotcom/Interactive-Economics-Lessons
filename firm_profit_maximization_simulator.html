@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firm Profit Maximization</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Architects+Daughter&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --board: #1e3a2e; --frame: #6b4a32;
+    --chalk: #f4f1e6; --chalk-dim: #cfd6c9;
+    --mc: #e8927c; --ac: #f2c94c; --avc: #cfd6c9;
+    --price: #8fb8de; --mr: #c98fde; --profit: #8fe0a0; --loss: #f28a8a;
+    --shadow: rgba(0,0,0,0.35);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: #0d1a14;
+    background-image: radial-gradient(circle at 20% 10%, #16291f 0%, #0d1a14 60%);
+    color: var(--chalk); font-family: 'Architects Daughter', cursive;
+    padding: 28px 14px 60px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 20px; }
+  h1 { font-family: 'Kalam', cursive; font-weight: 700; font-size: clamp(1.4rem, 4vw, 2rem); margin: 0 0 6px; }
+  header p { color: var(--chalk-dim); font-size: 0.93rem; margin: 0; }
+
+  .board {
+    background: var(--board); border: 14px solid var(--frame); border-radius: 6px;
+    box-shadow: 0 20px 40px var(--shadow), inset 0 0 60px rgba(0,0,0,0.3); padding: 20px;
+  }
+  canvas { width: 100%; height: auto; display: block; }
+  .legend { display: flex; gap: 12px; justify-content: center; margin-top: 10px; font-size: 0.75rem; color: var(--chalk-dim); flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .readout {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(110px,1fr)); gap: 12px;
+    margin-top: 18px; font-family: 'Kalam', cursive;
+  }
+  .readout div { text-align: center; }
+  .readout div span:first-child { color: var(--chalk-dim); font-size: 0.7rem; display: block; }
+  .readout b { font-size: 1.05rem; }
+
+  .badge {
+    display: block; text-align: center; margin-top: 12px; padding: 6px 16px; border-radius: 20px;
+    font-family: 'Kalam', cursive; font-size: 0.9rem; font-weight: 700;
+  }
+
+  .toggle { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
+  .toggle button {
+    font-family: 'Kalam', cursive; font-weight: 700;
+    background: transparent; color: var(--chalk-dim);
+    border: 1.5px solid rgba(255,255,255,0.2); border-radius: 20px;
+    padding: 8px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .toggle button.active.pc { background: rgba(143,184,222,0.18); border-color: var(--price); color: var(--price); }
+  .toggle button.active.mono { background: rgba(201,143,222,0.18); border-color: var(--mr); color: var(--mr); }
+
+  .panel {
+    background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 18px 20px; margin-top: 18px;
+  }
+  .control { margin-bottom: 14px; }
+  .control:last-child { margin-bottom: 0; }
+  .control label { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--chalk-dim); margin-bottom: 4px; }
+  .control label b { color: var(--chalk); }
+  .control .hint { font-size: 0.75rem; color: rgba(207,214,201,0.6); margin-bottom: 6px; }
+  input[type=range] { width: 100%; -webkit-appearance: none; height: 4px; background: rgba(255,255,255,0.25); border-radius: 2px; outline: none; }
+  #fixedCost, #efficient, #minMC, #curvature { accent-color: var(--mc); }
+  #price { accent-color: var(--price); }
+  #demandA, #demandB { accent-color: var(--mr); }
+  .group-title { font-family: 'Kalam', cursive; font-size: 0.85rem; color: var(--chalk-dim); margin: 16px 0 10px; }
+  .hidden { display: none; }
+
+  .note { margin-top: 18px; font-size: 0.88rem; line-height: 1.55; color: var(--chalk-dim);
+    border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 14px; }
+  .note b { color: var(--chalk); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Firm Profit Maximization</h1>
+    <p>A firm produces where marginal revenue equals marginal cost — see why, and see the profit it earns there</p>
+  </header>
+
+  <div class="board">
+    <canvas id="chart" width="740" height="460"></canvas>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--mc)"></i>MC</span>
+      <span><i class="dot" style="background:var(--ac)"></i>AC</span>
+      <span><i class="dot" style="background:var(--avc)"></i>AVC</span>
+      <span><i class="dot" style="background:var(--price)"></i>Price / Demand</span>
+      <span><i class="dot" style="background:var(--mr)"></i>MR</span>
+    </div>
+
+    <div class="readout">
+      <div><span>Quantity (Q*)</span><b id="qVal">--</b></div>
+      <div><span>Price (P*)</span><b id="pVal">--</b></div>
+      <div><span>Avg. cost at Q*</span><b id="acVal">--</b></div>
+      <div><span>Total revenue</span><b id="trVal">--</b></div>
+      <div><span>Total cost</span><b id="tcVal">--</b></div>
+      <div><span>Profit</span><b id="profitVal">--</b></div>
+    </div>
+
+    <span class="badge" id="statusBadge">--</span>
+
+    <div class="toggle">
+      <button id="btnPC" class="active pc">Perfect Competition</button>
+      <button id="btnMono" class="mono">Monopoly</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="group-title">Cost structure (both market types)</div>
+    <div class="control">
+      <label>Fixed cost <b id="v-fc">50</b></label>
+      <input type="range" id="fixedCost" min="0" max="150" value="50" step="5">
+    </div>
+    <div class="control">
+      <label>Efficient scale (where MC is lowest) <b id="v-eff">20</b></label>
+      <input type="range" id="efficient" min="5" max="35" value="20" step="1">
+    </div>
+    <div class="control">
+      <label>Minimum marginal cost <b id="v-mmc">2</b></label>
+      <input type="range" id="minMC" min="1" max="15" value="2" step="1">
+    </div>
+    <div class="control">
+      <label>Cost curvature <b id="v-curv">0.05</b></label>
+      <div class="hint">How sharply costs rise away from the efficient scale</div>
+      <input type="range" id="curvature" min="0.01" max="0.2" value="0.05" step="0.01">
+    </div>
+
+    <div id="pcControls">
+      <div class="group-title">Perfect competition</div>
+      <div class="control">
+        <label>Market price <b id="v-price">20</b></label>
+        <div class="hint">The firm is a price taker — it can sell any quantity at this price, so Price = MR</div>
+        <input type="range" id="price" min="1" max="60" value="20" step="1">
+      </div>
+    </div>
+
+    <div id="monoControls" class="hidden">
+      <div class="group-title">Monopoly demand curve</div>
+      <div class="control">
+        <label>Demand intercept (a) <b id="v-a">60</b></label>
+        <input type="range" id="demandA" min="30" max="100" value="60" step="1">
+      </div>
+      <div class="control">
+        <label>Demand slope (b) <b id="v-b">1.0</b></label>
+        <input type="range" id="demandB" min="0.3" max="3" value="1" step="0.1">
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>How to read it:</b> the firm keeps producing as long as another unit adds more to revenue
+    than to cost — so it stops exactly where <b>MR = MC</b>. Profit is the shaded rectangle
+    between price and average cost at that quantity (green if price exceeds AC, red if it
+    doesn't). In perfect competition, price is fixed by the market, so MR is a flat line. In
+    monopoly, selling more requires cutting price on <i>every</i> unit, so MR falls faster than
+    demand and sits below it.
+  </div>
+</div>
+
+<script>
+function getVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+let market = 'pc';
+
+// ---- CANVAS ----
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const pad = 50;
+const QMAX_VIEW = 60, PMAX_VIEW = 80;
+
+function toX(q) { return pad + (q / QMAX_VIEW) * (W - pad * 2); }
+function toY(p) { return H - pad - (p / PMAX_VIEW) * (H - pad * 2); }
+
+function drawAxes() {
+  ctx.strokeStyle = 'rgba(244,241,230,0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pad, pad); ctx.lineTo(pad, H - pad); ctx.lineTo(W - pad, H - pad);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(244,241,230,0.6)';
+  ctx.font = "13px 'Architects Daughter', cursive";
+  ctx.fillText('Quantity', W - pad - 55, H - pad + 24);
+  ctx.save();
+  ctx.translate(pad - 32, pad + 30);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Price / Cost', 0, 0);
+  ctx.restore();
+}
+
+function drawCurve(fn, color, dashed) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = dashed ? 1.8 : 2.8;
+  ctx.lineCap = 'round';
+  if (dashed) ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  let started = false;
+  for (let q = 0.5; q <= QMAX_VIEW; q += 0.5) {
+    const p = fn(q);
+    if (!isFinite(p) || p < 0 || p > PMAX_VIEW + 10) continue;
+    const x = toX(q), y = toY(p);
+    if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function render() {
+  const FC = Number(document.getElementById('fixedCost').value);
+  const q0 = Number(document.getElementById('efficient').value);
+  const m0 = Number(document.getElementById('minMC').value);
+  const c = Number(document.getElementById('curvature').value);
+  document.getElementById('v-fc').textContent = FC;
+  document.getElementById('v-eff').textContent = q0;
+  document.getElementById('v-mmc').textContent = m0;
+  document.getElementById('v-curv').textContent = c.toFixed(2);
+
+  const MC = q => m0 + c * Math.pow(q - q0, 2);
+  const VC = q => (c / 3) * Math.pow(q - q0, 3) + (c / 3) * Math.pow(q0, 3) + m0 * q;
+  const TC = q => FC + VC(q);
+  const AC = q => TC(q) / q;
+  const AVC = q => VC(q) / q;
+
+  let priceFn, mrFn, demandLabelFn;
+  let a, b, P;
+
+  if (market === 'pc') {
+    P = Number(document.getElementById('price').value);
+    document.getElementById('v-price').textContent = P;
+    priceFn = () => P;
+    mrFn = () => P;
+  } else {
+    a = Number(document.getElementById('demandA').value);
+    b = Number(document.getElementById('demandB').value);
+    document.getElementById('v-a').textContent = a;
+    document.getElementById('v-b').textContent = b.toFixed(1);
+    priceFn = q => a - b * q;
+    mrFn = q => a - 2 * b * q;
+  }
+
+  const TR = q => market === 'pc' ? P * q : (a - b * q) * q;
+  const profit = q => TR(q) - TC(q);
+
+  // grid search for profit-maximizing quantity
+  let bestQ = 0, bestProfit = -FC;
+  for (let q = 0.1; q <= QMAX_VIEW; q += 0.1) {
+    const pr = profit(q);
+    if (pr > bestProfit) { bestProfit = pr; bestQ = q; }
+  }
+  const Qstar = bestQ;
+  const Pstar = market === 'pc' ? P : (a - b * Qstar);
+  const ACstar = Qstar > 0 ? AC(Qstar) : null;
+
+  ctx.clearRect(0, 0, W, H);
+  drawAxes();
+
+  // profit/loss rectangle
+  if (Qstar > 0.05 && ACstar !== null) {
+    const isProfit = Pstar >= ACstar;
+    ctx.fillStyle = isProfit ? getVar('--profit') : getVar('--loss');
+    ctx.globalAlpha = 0.32;
+    const yTop = toY(Math.max(Pstar, ACstar));
+    const yBot = toY(Math.min(Pstar, ACstar));
+    ctx.fillRect(toX(0), yTop, toX(Qstar) - toX(0), yBot - yTop);
+    ctx.globalAlpha = 1;
+  }
+
+  // cost curves
+  drawCurve(MC, getVar('--mc'), false);
+  drawCurve(AC, getVar('--ac'), true);
+  drawCurve(AVC, getVar('--avc'), true);
+
+  // price/demand and MR curves
+  drawCurve(priceFn, getVar('--price'), false);
+  if (market === 'mono') drawCurve(mrFn, getVar('--mr'), false);
+
+  // Q* marker
+  ctx.strokeStyle = 'rgba(244,241,230,0.4)';
+  ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(toX(Qstar), H - pad); ctx.lineTo(toX(Qstar), toY(Math.max(Pstar, ACstar || 0)));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = getVar('--chalk');
+  ctx.beginPath(); ctx.arc(toX(Qstar), toY(Pstar), 5.5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1; ctx.stroke();
+
+  const tr = TR(Qstar), tc = TC(Qstar);
+  document.getElementById('qVal').textContent = Qstar.toFixed(1);
+  document.getElementById('pVal').textContent = Pstar.toFixed(1);
+  document.getElementById('acVal').textContent = ACstar !== null ? ACstar.toFixed(1) : '--';
+  document.getElementById('trVal').textContent = tr.toFixed(0);
+  document.getElementById('tcVal').textContent = tc.toFixed(0);
+  document.getElementById('profitVal').textContent = (bestProfit >= 0 ? '+' : '') + bestProfit.toFixed(0);
+
+  const badge = document.getElementById('statusBadge');
+  if (Qstar <= 0.05) {
+    badge.textContent = 'Shuts down — price below minimum average variable cost';
+    badge.style.background = 'rgba(242,138,138,0.18)';
+    badge.style.color = 'var(--loss)';
+    badge.style.border = '1px solid var(--loss)';
+  } else if (bestProfit >= 0) {
+    badge.textContent = 'Earning positive economic profit';
+    badge.style.background = 'rgba(143,224,160,0.18)';
+    badge.style.color = 'var(--profit)';
+    badge.style.border = '1px solid var(--profit)';
+  } else {
+    badge.textContent = 'Operating at a loss, but covering variable cost';
+    badge.style.background = 'rgba(242,138,138,0.18)';
+    badge.style.color = 'var(--loss)';
+    badge.style.border = '1px solid var(--loss)';
+  }
+}
+
+['fixedCost','efficient','minMC','curvature','price','demandA','demandB'].forEach(id => {
+  document.getElementById(id).addEventListener('input', render);
+});
+
+document.getElementById('btnPC').addEventListener('click', () => {
+  market = 'pc';
+  document.getElementById('btnPC').classList.add('active');
+  document.getElementById('btnMono').classList.remove('active');
+  document.getElementById('pcControls').classList.remove('hidden');
+  document.getElementById('monoControls').classList.add('hidden');
+  render();
+});
+document.getElementById('btnMono').addEventListener('click', () => {
+  market = 'mono';
+  document.getElementById('btnMono').classList.add('active');
+  document.getElementById('btnPC').classList.remove('active');
+  document.getElementById('monoControls').classList.remove('hidden');
+  document.getElementById('pcControls').classList.add('hidden');
+  render();
+});
+
+render();
+</script>
+</body>
+</html>

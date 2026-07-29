@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firm Cost Minimization</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Architects+Daughter&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --board: #1e3a2e; --frame: #6b4a32;
+    --chalk: #f4f1e6; --chalk-dim: #cfd6c9;
+    --isocost: #8fb8de; --isoquant: #f2c94c; --opt: #e8927c;
+    --shadow: rgba(0,0,0,0.35);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: #0d1a14;
+    background-image: radial-gradient(circle at 20% 10%, #16291f 0%, #0d1a14 60%);
+    color: var(--chalk); font-family: 'Architects Daughter', cursive;
+    padding: 28px 14px 60px;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 20px; }
+  h1 { font-family: 'Kalam', cursive; font-weight: 700; font-size: clamp(1.4rem, 4vw, 2rem); margin: 0 0 6px; }
+  header p { color: var(--chalk-dim); font-size: 0.93rem; margin: 0; }
+
+  .board {
+    background: var(--board); border: 14px solid var(--frame); border-radius: 6px;
+    box-shadow: 0 20px 40px var(--shadow), inset 0 0 60px rgba(0,0,0,0.3); padding: 20px;
+  }
+  canvas { width: 100%; height: auto; display: block; }
+  .legend { display: flex; gap: 14px; justify-content: center; margin-top: 10px; font-size: 0.78rem; color: var(--chalk-dim); flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+
+  .readout {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(110px,1fr)); gap: 14px;
+    margin-top: 18px; font-family: 'Kalam', cursive;
+  }
+  .readout div { text-align: center; }
+  .readout div span:first-child { color: var(--chalk-dim); font-size: 0.72rem; display: block; }
+  .readout b { font-size: 1.1rem; }
+
+  .panel {
+    background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 18px 20px; margin-top: 18px;
+  }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .presets button {
+    font-family: 'Architects Daughter', cursive;
+    background: transparent; color: var(--chalk);
+    border: 1.5px dashed var(--chalk-dim); border-radius: 20px;
+    padding: 7px 13px; font-size: 0.82rem; cursor: pointer;
+  }
+  .presets button:hover { border-color: var(--opt); color: var(--opt); }
+
+  .control { margin-bottom: 14px; }
+  .control:last-child { margin-bottom: 0; }
+  .control label { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--chalk-dim); margin-bottom: 4px; }
+  .control label b { color: var(--chalk); }
+  .control .hint { font-size: 0.75rem; color: rgba(207,214,201,0.6); margin-bottom: 6px; }
+  input[type=range] { width: 100%; -webkit-appearance: none; height: 4px; background: rgba(255,255,255,0.25); border-radius: 2px; outline: none; }
+  #targetQ { accent-color: var(--isoquant); }
+  #wageL { accent-color: var(--opt); }
+  #rentK { accent-color: var(--opt); }
+  #alpha { accent-color: var(--isocost); }
+  #beta { accent-color: var(--isocost); }
+
+  .note { margin-top: 18px; font-size: 0.88rem; line-height: 1.55; color: var(--chalk-dim);
+    border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 14px; }
+  .note b { color: var(--chalk); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Firm Cost Minimization</h1>
+    <p>Find the cheapest combination of labor and capital that still produces the target output</p>
+  </header>
+
+  <div class="board">
+    <canvas id="chart" width="700" height="440"></canvas>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--isoquant)"></i>Isoquant (target output)</span>
+      <span><i class="dot" style="background:var(--isocost)"></i>Isocost lines</span>
+      <span><i class="dot" style="background:var(--opt)"></i>Cost-minimizing input mix</span>
+    </div>
+
+    <div class="readout">
+      <div><span>Labor (L*)</span><b id="lVal">--</b></div>
+      <div><span>Capital (K*)</span><b id="kVal">--</b></div>
+      <div><span>Minimum cost (C*)</span><b id="cVal">--</b></div>
+      <div><span>MRTS at optimum</span><b id="mrtsVal">--</b></div>
+      <div><span>Input price ratio (w/r)</span><b id="ratioVal">--</b></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="presets">
+      <button data-q="30" data-w="4" data-r="4" data-alpha="0.5" data-beta="0.5">Reset</button>
+      <button data-q="30" data-w="8" data-r="4" data-alpha="0.5" data-beta="0.5">Wages rise</button>
+      <button data-q="30" data-w="4" data-r="4" data-alpha="0.7" data-beta="0.3">Labor-intensive technology</button>
+      <button data-q="45" data-w="4" data-r="4" data-alpha="0.5" data-beta="0.5">Output target rises</button>
+    </div>
+
+    <div class="control">
+      <label>Target output (Q₀) <b id="v-q">30</b></label>
+      <input type="range" id="targetQ" min="10" max="60" value="30" step="1">
+    </div>
+    <div class="control">
+      <label>Wage rate (w) <b id="v-w">4</b></label>
+      <input type="range" id="wageL" min="1" max="12" value="4" step="0.5">
+    </div>
+    <div class="control">
+      <label>Rental rate of capital (r) <b id="v-r">4</b></label>
+      <input type="range" id="rentK" min="1" max="12" value="4" step="0.5">
+    </div>
+    <div class="control">
+      <label>Output elasticity of labor (α) <b id="v-alpha">0.50</b></label>
+      <div class="hint">Production: Q = L^α · K^β — higher α means labor contributes more to output</div>
+      <input type="range" id="alpha" min="0.1" max="0.9" value="0.5" step="0.05">
+    </div>
+    <div class="control">
+      <label>Output elasticity of capital (β) <b id="v-beta">0.50</b></label>
+      <input type="range" id="beta" min="0.1" max="0.9" value="0.5" step="0.05">
+    </div>
+  </div>
+
+  <div class="note">
+    <b>How to read it:</b> the isoquant traces every combination of labor and capital that
+    produces the target output. Isocost lines show every input mix costing the same total.
+    The firm minimizes cost at the point where an isocost line is exactly <b>tangent</b> to the
+    isoquant — where the slope of the isoquant (the marginal rate of technical substitution)
+    equals the slope of the isocost line (the input price ratio, w/r).
+  </div>
+</div>
+
+<script>
+function getVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+// ---- CANVAS ----
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const pad = 48;
+
+let viewMaxL = 40, viewMaxK = 40;
+function toX(l) { return pad + (l / viewMaxL) * (W - pad * 2); }
+function toY(k) { return H - pad - (k / viewMaxK) * (H - pad * 2); }
+function seededJitter(i) { return Math.sin(i * 12.9898) * 0.6; }
+
+function drawAxes() {
+  ctx.strokeStyle = 'rgba(244,241,230,0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pad, pad); ctx.lineTo(pad, H - pad); ctx.lineTo(W - pad, H - pad);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(244,241,230,0.6)';
+  ctx.font = "14px 'Architects Daughter', cursive";
+  ctx.fillText('Labor (L)', W - pad - 66, H - pad + 26);
+  ctx.save();
+  ctx.translate(pad - 30, pad + 30);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Capital (K)', 0, 0);
+  ctx.restore();
+}
+
+// isoquant for output level q: K = (q / L^alpha)^(1/beta)
+function drawIsoquant(q, alpha, beta, color, bold) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = bold ? 3 : 1.6;
+  if (!bold) ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  let started = false, i = 0;
+  const lStart = viewMaxL * 0.02;
+  for (let l = lStart; l <= viewMaxL; l += viewMaxL / 90) {
+    const k = Math.pow(q / Math.pow(l, alpha), 1 / beta);
+    if (!isFinite(k) || k > viewMaxK * 1.4 || k < 0) { i++; continue; }
+    const jx = toX(l) + (bold ? seededJitter(i) : 0);
+    const jy = toY(k) + (bold ? seededJitter(i * 2) : 0);
+    if (!started) { ctx.moveTo(jx, jy); started = true; } else ctx.lineTo(jx, jy);
+    i++;
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawIsocost(cost, w, r, color, bold) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = bold ? 3 : 1.6;
+  if (!bold) ctx.setLineDash([5, 5]);
+  const lMax = cost / w, kMax = cost / r;
+  ctx.beginPath();
+  ctx.moveTo(toX(0), toY(kMax));
+  ctx.lineTo(toX(lMax), toY(0));
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function render() {
+  const q0 = Number(document.getElementById('targetQ').value);
+  const w = Number(document.getElementById('wageL').value);
+  const r = Number(document.getElementById('rentK').value);
+  const alpha = Number(document.getElementById('alpha').value);
+  const beta = Number(document.getElementById('beta').value);
+  document.getElementById('v-q').textContent = q0;
+  document.getElementById('v-w').textContent = w;
+  document.getElementById('v-r').textContent = r;
+  document.getElementById('v-alpha').textContent = alpha.toFixed(2);
+  document.getElementById('v-beta').textContent = beta.toFixed(2);
+
+  // cost-minimizing input mix (Cobb-Douglas cost minimization)
+  const ratio = (beta / alpha) * (w / r);
+  const Lstar = Math.pow(q0 / Math.pow(ratio, beta), 1 / (alpha + beta));
+  const Kstar = ratio * Lstar;
+  const Cstar = w * Lstar + r * Kstar;
+  const mrts = (alpha * Kstar) / (beta * Lstar); // -dK/dL along isoquant at optimum
+
+  viewMaxL = Lstar * 2.4;
+  viewMaxK = Kstar * 2.4;
+
+  ctx.clearRect(0, 0, W, H);
+  drawAxes();
+
+  // isoquant family
+  drawIsoquant(q0 * 0.7, alpha, beta, 'rgba(242,201,76,0.4)', false);
+  drawIsoquant(q0 * 1.3, alpha, beta, 'rgba(242,201,76,0.4)', false);
+  drawIsoquant(q0, alpha, beta, getVar('--isoquant'), true);
+
+  // isocost family (reference lines at lower/higher cost, same price ratio)
+  drawIsocost(Cstar * 0.7, w, r, 'rgba(143,184,222,0.35)', false);
+  drawIsocost(Cstar * 1.3, w, r, 'rgba(143,184,222,0.35)', false);
+  drawIsocost(Cstar, w, r, getVar('--isocost'), true);
+
+  // optimal point
+  ctx.fillStyle = getVar('--opt');
+  ctx.beginPath(); ctx.arc(toX(Lstar), toY(Kstar), 6.5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.2; ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(244,241,230,0.3)';
+  ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(toX(Lstar), H - pad); ctx.lineTo(toX(Lstar), toY(Kstar));
+  ctx.lineTo(pad, toY(Kstar));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  document.getElementById('lVal').textContent = Lstar.toFixed(1);
+  document.getElementById('kVal').textContent = Kstar.toFixed(1);
+  document.getElementById('cVal').textContent = Cstar.toFixed(1);
+  document.getElementById('mrtsVal').textContent = mrts.toFixed(2);
+  document.getElementById('ratioVal').textContent = (w / r).toFixed(2);
+}
+
+document.getElementById('targetQ').addEventListener('input', render);
+document.getElementById('wageL').addEventListener('input', render);
+document.getElementById('rentK').addEventListener('input', render);
+document.getElementById('alpha').addEventListener('input', render);
+document.getElementById('beta').addEventListener('input', render);
+
+document.querySelectorAll('.presets button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('targetQ').value = btn.dataset.q;
+    document.getElementById('wageL').value = btn.dataset.w;
+    document.getElementById('rentK').value = btn.dataset.r;
+    document.getElementById('alpha').value = btn.dataset.alpha;
+    document.getElementById('beta').value = btn.dataset.beta;
+    render();
+  });
+});
+
+render();
+</script>
+</body>
+</html>

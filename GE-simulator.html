@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>General Equilibrium — Edgeworth Box & Excess Demand</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+  :root{
+    --bg:#141a23; --panel:#1b2330; --grid:#2a3341; --ink:#e9e6dd;
+    --muted:#8b93a1; --teal:#5fa8a0; --plum:#8b7bc0; --gold:#c9a24b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',sans-serif;
+    background-image:linear-gradient(#20293580 1px, transparent 1px), linear-gradient(90deg,#20293580 1px, transparent 1px);
+    background-size:28px 28px;
+    padding:28px 24px 40px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;}
+  header{border-bottom:1px solid var(--grid);padding-bottom:18px;margin-bottom:26px;}
+  .eyebrow{font-size:11px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:6px;}
+  h1{font-family:'Fraunces',serif;font-weight:600;font-size:32px;margin:0;}
+  p.lead{color:var(--muted);font-size:14px;max-width:680px;margin-top:8px;line-height:1.55;}
+  .grid{display:grid;grid-template-columns:280px 1fr;gap:26px;}
+  .panel{background:var(--panel);border:1px solid var(--grid);border-radius:6px;padding:20px;}
+  .label{font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;color:var(--muted);}
+  .row{margin-bottom:18px;}
+  .row .top{display:flex;justify-content:space-between;margin-bottom:6px;font-size:12.5px;color:#a7afc0;}
+  .row .val{font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+  input[type=range]{width:100%;height:3px;background:#2a3341;border-radius:2px;-webkit-appearance:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:currentColor;box-shadow:0 0 0 3px var(--panel);cursor:pointer;}
+  .note{font-size:11.5px;color:#5c6373;margin-top:14px;padding-top:14px;border-top:1px solid var(--grid);line-height:1.5;}
+  .right-col{display:flex;flex-direction:column;gap:20px;}
+  .row2{display:grid;grid-template-columns:1fr 300px;gap:20px;}
+  .row2b{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .metric-big{font-family:'Fraunces',serif;font-size:26px;color:var(--gold);margin-bottom:2px;}
+  .metric-sub{font-size:11.5px;color:var(--muted);margin-bottom:16px;}
+  .mrow{display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;}
+  .mrow .lbl{color:var(--muted);}
+  .mrow .v{font-family:'IBM Plex Mono',monospace;}
+  .urow{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px;}
+  .divider{border-top:1px solid var(--grid);margin-top:14px;padding-top:14px;}
+  .legend{display:flex;gap:16px;font-size:11px;color:var(--muted);margin-top:6px;}
+  button{cursor:pointer;font-size:11px;padding:4px 10px;border-radius:4px;background:transparent;transition:opacity .15s;}
+  button:hover{opacity:.82;}
+  button:disabled{opacity:.35;cursor:default;}
+  .chart-foot{font-size:11px;color:var(--muted);margin-top:4px;}
+  svg text{font-family:'Inter',sans-serif;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Walrasian Exchange &middot; 2 Goods &middot; 2 Agents</div>
+    <h1>General Equilibrium Simulator</h1>
+    <p class="lead">A pure-exchange economy with Cobb&ndash;Douglas preferences. Set endowments and tastes for
+      consumers A and B and see the market-clearing price and allocation in the Edgeworth box.</p>
+  </header>
+
+  <div class="grid">
+    <!-- controls -->
+    <div class="panel">
+      <div class="label" style="color:var(--teal);">Consumer A</div>
+      <div class="row">
+        <div class="top"><span>Preference for X (&alpha;A)</span><span class="val" id="alphaA_v" style="color:var(--teal);"></span></div>
+        <input type="range" id="alphaA" min="0.1" max="0.9" step="0.01" value="0.65" style="color:var(--teal);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Endowment of X</span><span class="val" id="wxA_v" style="color:var(--teal);"></span></div>
+        <input type="range" id="wxA" min="1" max="99" step="1" value="75" style="color:var(--teal);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Endowment of Y</span><span class="val" id="wyA_v" style="color:var(--teal);"></span></div>
+        <input type="range" id="wyA" min="1" max="99" step="1" value="25" style="color:var(--teal);">
+      </div>
+
+      <div class="label" style="color:var(--plum);margin-top:4px;">Consumer B</div>
+      <div class="row">
+        <div class="top"><span>Preference for X (&alpha;B)</span><span class="val" id="alphaB_v" style="color:var(--plum);"></span></div>
+        <input type="range" id="alphaB" min="0.1" max="0.9" step="0.01" value="0.35" style="color:var(--plum);">
+      </div>
+      <div class="mrow"><span class="lbl">Endowment of X</span><span class="v" id="wxB_v" style="color:var(--plum);"></span></div>
+      <div class="mrow"><span class="lbl">Endowment of Y</span><span class="v" id="wyB_v" style="color:var(--plum);"></span></div>
+      <div class="note">B's endowment is the residual of the fixed stock (100 units each of X and Y), so the Edgeworth box always stays a fixed square.</div>
+    </div>
+
+    <!-- right column -->
+    <div class="right-col">
+      <div class="row2">
+        <div class="panel">
+          <div class="label">Edgeworth Box</div>
+          <svg id="box" viewBox="0 0 440 420" width="100%" height="auto"></svg>
+          <div class="legend">
+            <span><span style="color:var(--teal)">&mdash;</span> A's indifference curve</span>
+            <span><span style="color:var(--plum)">&mdash;</span> B's indifference curve</span>
+            <span><span style="color:var(--gold)">&#8231;</span> contract curve</span>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="label">Equilibrium</div>
+          <div class="metric-big" id="pEq_v"></div>
+          <div class="metric-sub">units of Y per unit of X</div>
+          <div class="mrow"><span class="lbl">A holds</span><span class="v" id="aHolds" style="color:var(--teal);"></span></div>
+          <div class="mrow"><span class="lbl">B holds</span><span class="v" id="bHolds" style="color:var(--plum);"></span></div>
+          <div class="divider">
+            <div class="label" style="margin-bottom:8px;">Gains from trade</div>
+            <div class="urow"><span id="uA_txt" style="color:var(--teal);"></span><span class="v" id="uA_gain"></span></div>
+            <div class="urow"><span id="uB_txt" style="color:var(--plum);"></span><span class="v" id="uB_gain"></span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const TOTAL = 100;
+const COL = { teal:'#5fa8a0', plum:'#8b7bc0', gold:'#c9a24b', grid:'#2a3341', muted:'#8b93a1', bg:'#141a23' };
+
+function clamp(v){ return Math.max(0.001, Math.min(TOTAL-0.001, v)); }
+function utility(x,y,a){ return Math.pow(x,a)*Math.pow(y,1-a); }
+function equilibriumPrice(aA,aB,wxA,wyA,wxB,wyB){
+  const num = aA*wyA + aB*wyB;
+  const den = wxA*(1-aA) + wxB*(1-aB);
+  return den>0 ? num/den : NaN;
+}
+function excessDemandX(p,aA,aB,wxA,wyA,wxB,wyB){
+  const IA = p*wxA+wyA, IB = p*wxB+wyB;
+  const xA = aA*IA/p, xB = aB*IB/p;
+  return xA+xB-TOTAL;
+}
+function allocationAt(p,aA,wxA,wyA){
+  const IA = p*wxA+wyA;
+  const xA = aA*IA/p, yA = (1-aA)*IA;
+  return { xA: clamp(xA), yA: clamp(yA) };
+}
+function indiffCurveA(U,alpha,n=60){
+  const pts=[];
+  for(let i=0;i<=n;i++){
+    const x = 1 + (i/n)*(TOTAL-2);
+    const y = Math.pow(U/Math.pow(x,alpha), 1/(1-alpha));
+    if(y>0 && y<TOTAL) pts.push([x,y]);
+  }
+  return pts;
+}
+function indiffCurveB(U,alpha,n=60){
+  const pts=[];
+  for(let i=0;i<=n;i++){
+    const xB = 1 + (i/n)*(TOTAL-2);
+    const yB = Math.pow(U/Math.pow(xB,alpha), 1/(1-alpha));
+    if(yB>0 && yB<TOTAL) pts.push([TOTAL-xB, TOTAL-yB]);
+  }
+  return pts;
+}
+function contractCurve(aA,aB,n=60){
+  const kA = aA/(1-aA), kB = aB/(1-aB);
+  const pts=[];
+  for(let i=1;i<n;i++){
+    const xA = (i/n)*TOTAL;
+    const denom = kA*(TOTAL-xA) + kB*xA;
+    const yA = (kB*xA*TOTAL)/denom;
+    pts.push([xA,yA]);
+  }
+  return pts;
+}
+
+// ---- box geometry ----
+const BOX = { x0:64, y0:40, size:340 };
+function toScreen([x,y]){ return [BOX.x0+(x/TOTAL)*BOX.size, BOX.y0+BOX.size-(y/TOTAL)*BOX.size]; }
+function pathFrom(pts){
+  if(!pts.length) return '';
+  return 'M ' + pts.map(toScreen).map(([x,y])=>`${x.toFixed(1)},${y.toFixed(1)}`).join(' L ');
+}
+function svgEl(tag, attrs){
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for(const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+
+// ---- state ----
+let state = { alphaA:0.65, alphaB:0.35, wxA:75, wyA:25 };
+
+const $ = id => document.getElementById(id);
+
+function render(){
+  const { alphaA, alphaB, wxA, wyA } = state;
+  const wxB = TOTAL-wxA, wyB = TOTAL-wyA;
+  const pEq = equilibriumPrice(alphaA, alphaB, wxA, wyA, wxB, wyB);
+  const eq = allocationAt(pEq, alphaA, wxA, wyA);
+  const eqB = { xB: TOTAL-eq.xA, yB: TOTAL-eq.yA };
+  const uA0 = utility(wxA, wyA, alphaA), uB0 = utility(wxB, wyB, alphaB);
+  const uA1 = utility(eq.xA, eq.yA, alphaA), uB1 = utility(eqB.xB, eqB.yB, alphaB);
+
+  // ---- control readouts ----
+  $('alphaA_v').textContent = alphaA.toFixed(2);
+  $('alphaB_v').textContent = alphaB.toFixed(2);
+  $('wxA_v').textContent = wxA;
+  $('wyA_v').textContent = wyA;
+  $('wxB_v').textContent = wxB;
+  $('wyB_v').textContent = wyB;
+
+  // ---- metrics ----
+  $('pEq_v').textContent = 'p* = ' + pEq.toFixed(3);
+  $('aHolds').textContent = `${eq.xA.toFixed(1)} X  /  ${eq.yA.toFixed(1)} Y`;
+  $('bHolds').textContent = `${eqB.xB.toFixed(1)} X  /  ${eqB.yB.toFixed(1)} Y`;
+  $('uA_txt').textContent = `A: ${uA0.toFixed(1)} \u2192 ${uA1.toFixed(1)}`;
+  $('uB_txt').textContent = `B: ${uB0.toFixed(1)} \u2192 ${uB1.toFixed(1)}`;
+  const gainA = ((uA1-uA0)/uA0*100), gainB = ((uB1-uB0)/uB0*100);
+  $('uA_gain').textContent = (gainA>0?'+':'') + gainA.toFixed(1) + '%';
+  $('uA_gain').style.color = gainA>0 ? '#7fb896' : COL.muted;
+  $('uB_gain').textContent = (gainB>0?'+':'') + gainB.toFixed(1) + '%';
+  $('uB_gain').style.color = gainB>0 ? '#7fb896' : COL.muted;
+
+  // ---- Edgeworth box ----
+  const box = $('box');
+  box.innerHTML = '';
+  box.appendChild(svgEl('rect', { x:BOX.x0, y:BOX.y0, width:BOX.size, height:BOX.size, fill:'none', stroke:COL.grid, 'stroke-width':1.5 }));
+
+  const labelOA = svgEl('text', { x:BOX.x0-10, y:BOX.y0+BOX.size+22, 'font-size':11, fill:COL.muted }); labelOA.textContent='O_A'; box.appendChild(labelOA);
+  const labelOB = svgEl('text', { x:BOX.x0+BOX.size-6, y:BOX.y0-10, 'font-size':11, fill:COL.muted }); labelOB.textContent='O_B'; box.appendChild(labelOB);
+  const labelX = svgEl('text', { x:BOX.x0+BOX.size/2-30, y:BOX.y0+BOX.size+34, 'font-size':11, fill:COL.muted }); labelX.textContent='Good X \u2192'; box.appendChild(labelX);
+  const labelY = svgEl('text', { x:BOX.x0-46, y:BOX.y0+BOX.size/2, 'font-size':11, fill:COL.muted, transform:`rotate(-90 ${BOX.x0-46} ${BOX.y0+BOX.size/2})` }); labelY.textContent='Good Y \u2192'; box.appendChild(labelY);
+
+  const contract = contractCurve(alphaA, alphaB);
+  box.appendChild(svgEl('path', { d:pathFrom(contract), fill:'none', stroke:COL.gold, 'stroke-width':1.6, 'stroke-dasharray':'3 4', opacity:0.85 }));
+
+  const indiffAEnd = indiffCurveA(uA0, alphaA), indiffBEnd = indiffCurveB(uB0, alphaB);
+  box.appendChild(svgEl('path', { d:pathFrom(indiffAEnd), fill:'none', stroke:COL.teal, 'stroke-width':1, opacity:0.35 }));
+  box.appendChild(svgEl('path', { d:pathFrom(indiffBEnd), fill:'none', stroke:COL.plum, 'stroke-width':1, opacity:0.35 }));
+
+  const indiffAEq = indiffCurveA(uA1, alphaA), indiffBEq = indiffCurveB(uB1, alphaB);
+  box.appendChild(svgEl('path', { d:pathFrom(indiffAEq), fill:'none', stroke:COL.teal, 'stroke-width':1.8 }));
+  box.appendChild(svgEl('path', { d:pathFrom(indiffBEq), fill:'none', stroke:COL.plum, 'stroke-width':1.8 }));
+
+  const [ex,ey] = toScreen([wxA,wyA]);
+  box.appendChild(svgEl('circle', { cx:ex, cy:ey, r:4.5, fill:COL.bg, stroke:'#8b93a1', 'stroke-width':1.6 }));
+  const endLbl = svgEl('text', { x:ex+8, y:ey-6, 'font-size':10.5, fill:COL.muted }); endLbl.textContent='endowment'; box.appendChild(endLbl);
+
+  const [qx,qy] = toScreen([eq.xA, eq.yA]);
+  box.appendChild(svgEl('circle', { cx:qx, cy:qy, r:5.5, fill:COL.gold, stroke:COL.bg, 'stroke-width':1.5 }));
+  const eqLbl = svgEl('text', { x:qx+8, y:qy+14, 'font-size':10.5, fill:COL.gold }); eqLbl.textContent='equilibrium'; box.appendChild(eqLbl);
+
+}
+
+function bindSlider(id, key, isFloat){
+  $(id).addEventListener('input', e=>{
+    state[key] = isFloat ? parseFloat(e.target.value) : parseInt(e.target.value);
+    render();
+  });
+}
+bindSlider('alphaA','alphaA',true);
+bindSlider('alphaB','alphaB',true);
+bindSlider('wxA','wxA',false);
+bindSlider('wyA','wyA',false);
+
+render();
+</script>
+</body>
+</html>

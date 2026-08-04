@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>National Income Accounting</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+  :root{
+    --bg:#141a23; --panel:#1b2330; --grid:#2a3341; --ink:#e9e6dd;
+    --muted:#8b93a1; --teal:#5fa8a0; --plum:#8b7bc0; --gold:#c9a24b;
+    --sage:#7fa87f; --slate:#6b87b0; --rose:#b06b8a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',sans-serif;
+    background-image:linear-gradient(#20293580 1px, transparent 1px), linear-gradient(90deg,#20293580 1px, transparent 1px);
+    background-size:28px 28px;
+    padding:28px 24px 40px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;}
+  header{border-bottom:1px solid var(--grid);padding-bottom:18px;margin-bottom:26px;}
+  .eyebrow{font-size:11px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:6px;}
+  h1{font-family:'Fraunces',serif;font-weight:600;font-size:32px;margin:0;}
+  p.lead{color:var(--muted);font-size:14px;max-width:720px;margin-top:8px;line-height:1.55;}
+  .grid{display:grid;grid-template-columns:280px 1fr;gap:26px;}
+  .panel{background:var(--panel);border:1px solid var(--grid);border-radius:6px;padding:20px;}
+  .label{font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;color:var(--muted);}
+  .row{margin-bottom:16px;}
+  .row .top{display:flex;justify-content:space-between;margin-bottom:5px;font-size:12.5px;color:#a7afc0;}
+  .row .val{font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+  input[type=range]{width:100%;height:3px;background:var(--grid);border-radius:2px;-webkit-appearance:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:currentColor;box-shadow:0 0 0 3px var(--panel);cursor:pointer;}
+  .right-col{display:flex;flex-direction:column;gap:20px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .big{font-family:'Fraunces',serif;font-size:24px;margin-bottom:12px;}
+  .bar-row{margin-bottom:14px;}
+  .bar-top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;}
+  .bar-track{background:var(--grid);height:10px;border-radius:3px;}
+  .bar-fill{height:100%;border-radius:3px;transition:width .2s;}
+  .bar-sub{font-size:10.5px;color:#5c6373;margin-top:3px;}
+  svg text{font-family:'Inter',sans-serif;}
+  .flow-footer{display:flex;justify-content:space-between;margin-top:8px;flex-wrap:wrap;gap:12px;font-size:12.5px;}
+  .flow-note{font-size:11px;color:#5c6373;margin-top:8px;line-height:1.5;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Expenditure &middot; Income &middot; Circular Flow</div>
+    <h1>National Income Accounting</h1>
+    <p class="lead">Adjust the expenditure components and accounting adjustments below to see how GDP is
+      built up, then cascades down through GNP, NNP, National Income, Personal Income, and
+      Disposable Income — and how it all flows around the circular economy.</p>
+  </header>
+
+  <div class="grid">
+    <!-- controls -->
+    <div class="panel">
+      <div class="label" style="color:var(--gold);">Expenditure (Y = C+I+G+NX)</div>
+      <div class="row">
+        <div class="top"><span>Consumption (C)</span><span class="val" id="C_v" style="color:var(--gold);"></span></div>
+        <input type="range" id="C" min="0" max="1500" step="10" value="700" style="color:var(--gold);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Investment (I)</span><span class="val" id="I_v" style="color:var(--teal);"></span></div>
+        <input type="range" id="I" min="0" max="700" step="10" value="220" style="color:var(--teal);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Government spending (G)</span><span class="val" id="G_v" style="color:var(--plum);"></span></div>
+        <input type="range" id="G" min="0" max="700" step="10" value="260" style="color:var(--plum);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Exports (X)</span><span class="val" id="X_v" style="color:var(--sage);"></span></div>
+        <input type="range" id="X" min="0" max="600" step="10" value="160" style="color:var(--sage);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Imports (M)</span><span class="val" id="M_v" style="color:var(--rose);"></span></div>
+        <input type="range" id="M" min="0" max="600" step="10" value="190" style="color:var(--rose);">
+      </div>
+
+      <div class="label" style="margin-top:4px;">Cascade adjustments</div>
+      <div class="row">
+        <div class="top"><span>Net factor income from abroad</span><span class="val" id="nfia_v" style="color:var(--teal);"></span></div>
+        <input type="range" id="nfia" min="-100" max="100" step="5" value="-5" style="color:var(--teal);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Depreciation</span><span class="val" id="dep_v" style="color:var(--slate);"></span></div>
+        <input type="range" id="dep" min="0" max="300" step="5" value="120" style="color:var(--slate);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Net indirect business taxes</span><span class="val" id="nit_v" style="color:var(--plum);"></span></div>
+        <input type="range" id="nit" min="-50" max="300" step="5" value="85" style="color:var(--plum);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Retained profits + SS contrib.</span><span class="val" id="enr_v" style="color:var(--sage);"></span></div>
+        <input type="range" id="enr" min="0" max="300" step="5" value="90" style="color:var(--sage);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Transfer payments</span><span class="val" id="trf_v" style="color:var(--sage);"></span></div>
+        <input type="range" id="trf" min="0" max="400" step="5" value="140" style="color:var(--sage);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Personal taxes</span><span class="val" id="ptx_v" style="color:var(--rose);"></span></div>
+        <input type="range" id="ptx" min="0" max="400" step="5" value="150" style="color:var(--rose);">
+      </div>
+
+      <div class="label" style="margin-top:4px;">Income approach (factor payments)</div>
+      <div class="row">
+        <div class="top"><span>Compensation of employees</span><span class="val" id="comp_v" style="color:var(--gold);"></span></div>
+        <input type="range" id="comp" min="0" max="1200" step="10" value="560" style="color:var(--gold);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Rental income</span><span class="val" id="rent_v" style="color:var(--teal);"></span></div>
+        <input type="range" id="rent" min="0" max="200" step="5" value="45" style="color:var(--teal);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Net interest</span><span class="val" id="intr_v" style="color:var(--plum);"></span></div>
+        <input type="range" id="intr" min="0" max="300" step="5" value="70" style="color:var(--plum);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Proprietors' income</span><span class="val" id="prop_v" style="color:var(--sage);"></span></div>
+        <input type="range" id="prop" min="0" max="300" step="5" value="95" style="color:var(--sage);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Corporate profits</span><span class="val" id="corp_v" style="color:var(--rose);"></span></div>
+        <input type="range" id="corp" min="0" max="500" step="10" value="170" style="color:var(--rose);">
+      </div>
+    </div>
+
+    <!-- right column -->
+    <div class="right-col">
+      <div class="row2">
+        <div class="panel">
+          <div class="label" style="margin-bottom:4px;">Expenditure approach</div>
+          <div class="big" style="color:var(--gold);" id="gdp_big"></div>
+          <div id="exp_bars"></div>
+        </div>
+        <div class="panel">
+          <div class="label" style="margin-bottom:4px;">GDP &rarr; Disposable Income</div>
+          <div class="big" style="color:var(--rose);" id="di_big"></div>
+          <div id="cascade_bars"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="label" style="margin-bottom:4px;">Income approach</div>
+        <div class="big" style="color:var(--slate);" id="ni_big"></div>
+        <div id="income_bars"></div>
+        <div class="flow-footer" style="margin-top:2px;">
+          <div><span style="color:var(--muted);">GDP (income approach): </span><span class="val" id="gdpi_v"></span></div>
+          <div><span style="color:var(--muted);">GDP (expenditure approach): </span><span class="val" id="gdpe_v" style="color:var(--gold);"></span></div>
+          <div><span style="color:var(--muted);">Statistical discrepancy: </span><span class="val" id="discrep_v"></span></div>
+        </div>
+        <div class="flow-note">National Income = compensation + rents + interest + proprietors' income + corporate
+          profits. Adding back net indirect taxes, then depreciation, then subtracting net factor
+          income from abroad reconstructs GDP from the income side — independently of the
+          expenditure side. Real statistical agencies report the gap between the two as the
+          statistical discrepancy.</div>
+      </div>
+
+      <div class="panel">
+        <div class="label">Circular flow — leakages &amp; injections</div>
+        <svg id="flow" viewBox="0 0 760 300" width="100%" height="auto"></svg>
+        <div class="flow-footer">
+          <div><span style="color:var(--muted);">Leakages (S+T+M): </span><span class="val" id="leak_v" style="color:var(--rose);"></span></div>
+          <div><span style="color:var(--muted);">Injections (I+G+X): </span><span class="val" id="inj_v" style="color:var(--teal);"></span></div>
+          <div><span style="color:var(--muted);">Gap (injections − leakages): </span><span class="val" id="gap_v"></span></div>
+        </div>
+        <div class="flow-note">In a fully closed model, leakages (saving, taxes, imports) always equal injections
+          (investment, government spending, exports) once prices and incomes adjust. Here the
+          sliders are independent, so a nonzero gap reflects the economy's net lending or
+          borrowing position implied by your chosen values.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COL = { gold:'#c9a24b', teal:'#5fa8a0', plum:'#8b7bc0', sage:'#7fa87f', slate:'#6b87b0', rose:'#b06b8a', muted:'#8b93a1', panel:'#1b2330', ink:'#e9e6dd' };
+const $ = id => document.getElementById(id);
+function fmt(v){ return Math.round(v).toLocaleString(); }
+
+const ids = ['C','I','G','X','M','nfia','dep','nit','enr','trf','ptx','comp','rent','intr','prop','corp'];
+function readState(){
+  const s = {};
+  ids.forEach(id => s[id] = parseFloat($(id).value));
+  return s;
+}
+
+function barRow(container, label, value, max, color, sub){
+  const row = document.createElement('div');
+  row.className = 'bar-row';
+  const pct = Math.max(0, Math.min(100, (value/max)*100));
+  row.innerHTML = `
+    <div class="bar-top"><span style="color:${COL.muted}">${label}</span>
+      <span style="font-family:'IBM Plex Mono',monospace;color:${COL.ink}">$${fmt(value)}bn</span></div>
+    <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+    ${sub ? `<div class="bar-sub">${sub}</div>` : ''}
+  `;
+  container.appendChild(row);
+}
+
+function svgEl(tag, attrs, text){
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for(const k in attrs) el.setAttribute(k, attrs[k]);
+  if(text !== undefined) el.textContent = text;
+  return el;
+}
+function flowBox(svg, x, y, w, h, label, color){
+  svg.appendChild(svgEl('rect', {x,y,width:w,height:h,rx:5,fill:COL.panel,stroke:color,'stroke-width':1.6}));
+  svg.appendChild(svgEl('text', {x:x+w/2, y:y+h/2+4, 'text-anchor':'middle', 'font-size':12, fill:COL.ink}, label));
+}
+function arrow(svg, x1,y1,x2,y2,color,label,labelPos,dash){
+  const angle = Math.atan2(y2-y1, x2-x1);
+  const ah = 6;
+  const ax1 = x2 - ah*Math.cos(angle-Math.PI/6), ay1 = y2 - ah*Math.sin(angle-Math.PI/6);
+  const ax2 = x2 - ah*Math.cos(angle+Math.PI/6), ay2 = y2 - ah*Math.sin(angle+Math.PI/6);
+  const attrs = {x1,y1,x2,y2,stroke:color,'stroke-width':1.6};
+  if(dash) attrs['stroke-dasharray'] = dash;
+  svg.appendChild(svgEl('line', attrs));
+  svg.appendChild(svgEl('polygon', {points:`${x2},${y2} ${ax1},${ay1} ${ax2},${ay2}`, fill:color}));
+  if(label){
+    let lx=(x1+x2)/2, ly=(y1+y2)/2-6;
+    if(labelPos==='start'){ lx = x1+(x2-x1)*0.22; ly = y1+(y2-y1)*0.22-6; }
+    if(labelPos==='end'){ lx = x1+(x2-x1)*0.78; ly = y1+(y2-y1)*0.78-6; }
+    svg.appendChild(svgEl('text', {x:lx,y:ly,'text-anchor':'middle','font-size':10.5,fill:color}, label));
+  }
+}
+
+function render(){
+  const s = readState();
+  ids.forEach(id => { $(id+'_v').textContent = (s[id]<0?'-':'') + '$' + fmt(Math.abs(s[id])); });
+
+  const NX = s.X - s.M;
+  const GDP = s.C + s.I + s.G + NX;
+  const GNP = GDP + s.nfia;
+  const NNP = GNP - s.dep;
+  const NI = NNP - s.nit;
+  const PI = NI - s.enr + s.trf;
+  const DI = PI - s.ptx;
+
+  const personalSaving = DI - s.C;
+  const totalTax = s.ptx + s.nit;
+  const leakages = personalSaving + totalTax + s.M;
+  const injections = s.I + s.G + s.X;
+  const gap = injections - leakages;
+
+  $('gdp_big').textContent = `GDP = $${fmt(GDP)}bn`;
+  $('di_big').textContent = `DI = $${fmt(DI)}bn`;
+
+  // expenditure bars
+  const expBars = $('exp_bars'); expBars.innerHTML = '';
+  const expMax = GDP*1.15;
+  barRow(expBars, 'Consumption (C)', s.C, expMax, COL.gold);
+  barRow(expBars, 'Investment (I)', s.I, expMax, COL.teal);
+  barRow(expBars, 'Government (G)', s.G, expMax, COL.plum);
+  barRow(expBars, 'Net exports (X − M)', Math.abs(NX), expMax, COL.sage,
+    NX < 0 ? 'trade deficit — shown as magnitude, subtracts from GDP' : 'trade surplus');
+
+  // cascade bars
+  const cascade = [
+    { label:'GDP', value:GDP, color:COL.gold, note:'Gross Domestic Product' },
+    { label:'GNP', value:GNP, color:COL.teal, note:`${s.nfia>=0?'+':'\u2212'} $${fmt(Math.abs(s.nfia))}bn net factor income from abroad` },
+    { label:'NNP', value:NNP, color:COL.slate, note:`\u2212 $${fmt(s.dep)}bn depreciation (capital consumption)` },
+    { label:'NI', value:NI, color:COL.plum, note:`\u2212 $${fmt(s.nit)}bn net indirect business taxes` },
+    { label:'PI', value:PI, color:COL.sage, note:`\u2212 $${fmt(s.enr)}bn retained profits/SS contributions, + $${fmt(s.trf)}bn transfers` },
+    { label:'DI', value:DI, color:COL.rose, note:`\u2212 $${fmt(s.ptx)}bn personal taxes` },
+  ];
+  const cascadeMax = Math.max(...cascade.map(c=>c.value)) * 1.05;
+  const cBars = $('cascade_bars'); cBars.innerHTML = '';
+  cascade.forEach(c => barRow(cBars, c.label, c.value, cascadeMax, c.color, c.note));
+
+  // income approach
+  const NI_income = s.comp + s.rent + s.intr + s.prop + s.corp;
+  const GDP_income = NI_income + s.nit + s.dep - s.nfia;
+  const discrepancy = GDP - GDP_income;
+  $('ni_big').textContent = `NI = $${fmt(NI_income)}bn`;
+  const incBars = $('income_bars'); incBars.innerHTML = '';
+  const incMax = NI_income * 1.15;
+  barRow(incBars, 'Compensation of employees', s.comp, incMax, COL.gold);
+  barRow(incBars, 'Rental income', s.rent, incMax, COL.teal);
+  barRow(incBars, 'Net interest', s.intr, incMax, COL.plum);
+  barRow(incBars, "Proprietors' income", s.prop, incMax, COL.sage);
+  barRow(incBars, 'Corporate profits', s.corp, incMax, COL.rose);
+  $('gdpi_v').textContent = `$${fmt(GDP_income)}bn`;
+  $('gdpe_v').textContent = `$${fmt(GDP)}bn`;
+  const discEl = $('discrep_v');
+  discEl.textContent = (discrepancy>=0?'+':'') + '$' + fmt(discrepancy) + 'bn';
+  discEl.style.fontFamily = "'IBM Plex Mono', monospace";
+  discEl.style.color = Math.abs(discrepancy) < 1 ? COL.sage : COL.gold;
+
+  // circular flow diagram
+  const svg = $('flow'); svg.innerHTML = '';
+  flowBox(svg, 40, 120, 150, 60, 'Households', COL.gold);
+  flowBox(svg, 570, 120, 150, 60, 'Firms', COL.gold);
+  arrow(svg, 190, 135, 570, 135, COL.gold, `C = $${fmt(s.C)}bn`);
+  arrow(svg, 570, 165, 190, 165, COL.muted, 'factor income', null, '3 3');
+
+  flowBox(svg, 305, 20, 150, 55, 'Government', COL.plum);
+  arrow(svg, 140, 120, 340, 78, COL.plum, `T = $${fmt(totalTax)}bn`, 'start');
+  arrow(svg, 455, 78, 640, 120, COL.plum, `G = $${fmt(s.G)}bn`, 'end');
+
+  flowBox(svg, 305, 225, 150, 55, 'Financial Markets', COL.teal);
+  arrow(svg, 140, 180, 340, 225, COL.teal, `S = $${fmt(personalSaving)}bn`, 'start');
+  arrow(svg, 455, 225, 640, 180, COL.teal, `I = $${fmt(s.I)}bn`, 'end');
+
+  svg.appendChild(svgEl('text', {x:695,y:55,'text-anchor':'middle','font-size':11,fill:COL.sage}, 'Rest of World'));
+  arrow(svg, 695, 120, 695, 70, COL.rose, `M = $${fmt(s.M)}bn`, null, '3 3');
+  arrow(svg, 720, 70, 720, 120, COL.sage, `X = $${fmt(s.X)}bn`, null, '3 3');
+
+  $('leak_v').textContent = `$${fmt(leakages)}bn`;
+  $('inj_v').textContent = `$${fmt(injections)}bn`;
+  const gapEl = $('gap_v');
+  gapEl.textContent = (gap>=0?'+':'') + '$' + fmt(gap) + 'bn';
+  gapEl.style.color = Math.abs(gap) < 1 ? COL.sage : COL.gold;
+  gapEl.style.fontFamily = "'IBM Plex Mono', monospace";
+}
+
+ids.forEach(id => $(id).addEventListener('input', render));
+render();
+</script>
+</body>
+</html>

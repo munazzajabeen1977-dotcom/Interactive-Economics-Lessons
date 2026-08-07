@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Output Approach to National Income — Pakistan</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+  :root{
+    --bg:#141a23; --panel:#1b2330; --grid:#2a3341; --ink:#e9e6dd;
+    --muted:#8b93a1; --gold:#c9a24b; --teal:#5fa8a0; --plum:#8b7bc0;
+    --sage:#7fa87f; --slate:#6b87b0; --rose:#b06b8a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',sans-serif;
+    background-image:linear-gradient(#20293580 1px, transparent 1px), linear-gradient(90deg,#20293580 1px, transparent 1px);
+    background-size:28px 28px;
+    padding:28px 24px 40px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;}
+  header{border-bottom:1px solid var(--grid);padding-bottom:18px;margin-bottom:26px;}
+  .eyebrow{font-size:11px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:6px;}
+  h1{font-family:'Fraunces',serif;font-weight:600;font-size:32px;margin:0;}
+  p.lead{color:var(--muted);font-size:14px;max-width:720px;margin-top:8px;line-height:1.55;}
+  .grid{display:grid;grid-template-columns:290px 1fr;gap:26px;}
+  .panel{background:var(--panel);border:1px solid var(--grid);border-radius:6px;padding:20px;}
+  .label{font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;color:var(--muted);}
+  .row{margin-bottom:13px;}
+  .row .top{display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;color:#a7afc0;}
+  .row .val{font-family:'IBM Plex Mono',monospace;font-size:12px;}
+  input[type=range]{width:100%;height:3px;background:var(--grid);border-radius:2px;-webkit-appearance:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:currentColor;box-shadow:0 0 0 3px var(--panel);cursor:pointer;}
+  .right-col{display:flex;flex-direction:column;gap:20px;}
+  .row2{display:grid;grid-template-columns:260px 1fr;gap:20px;}
+  .donut-wrap{display:flex;flex-direction:column;align-items:center;}
+  .bar-row{margin-bottom:10px;}
+  .bar-top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px;}
+  .bar-track{background:var(--grid);height:9px;border-radius:3px;}
+  .bar-fill{height:100%;border-radius:3px;transition:width .2s;}
+  svg text{font-family:'Inter',sans-serif;}
+  .kpi-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+  .kpi-label{font-size:11.5px;color:var(--muted);}
+  .kpi-val{font-family:'IBM Plex Mono',monospace;font-size:18px;}
+  .note{font-size:11px;color:#5c6373;margin-top:12px;line-height:1.5;}
+  .sub-head{font-size:11px;margin:10px 0 6px;}
+  .legend-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;width:100%;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Output / Value-Added Approach &middot; Pakistan</div>
+    <h1>Sectoral Output Approach to National Income</h1>
+    <p class="lead">GDP built up as the sum of value added across agriculture, industry, and services —
+      the way PBS actually compiles it — calibrated to Pakistan's roughly 23% / 18% / 58% sector
+      split. Adjust any sub-sector to see how gross value added (GVA) at basic prices reconciles
+      to GDP at market prices.</p>
+  </header>
+
+  <div class="grid">
+    <!-- controls -->
+    <div class="panel">
+      <div class="label" style="color:var(--sage);">Agriculture</div>
+      <div class="row"><div class="top"><span>Crops</span><span class="val" id="crops_v" style="color:var(--sage);"></span></div>
+        <input type="range" id="crops" min="0" max="20" step="0.1" value="11.7" style="color:var(--sage);"></div>
+      <div class="row"><div class="top"><span>Livestock</span><span class="val" id="livestock_v" style="color:var(--sage);"></span></div>
+        <input type="range" id="livestock" min="0" max="20" step="0.1" value="15.1" style="color:var(--sage);"></div>
+      <div class="row"><div class="top"><span>Forestry</span><span class="val" id="forestry_v" style="color:var(--sage);"></span></div>
+        <input type="range" id="forestry" min="0" max="20" step="0.1" value="0.5" style="color:var(--sage);"></div>
+      <div class="row"><div class="top"><span>Fishing</span><span class="val" id="fishing_v" style="color:var(--sage);"></span></div>
+        <input type="range" id="fishing" min="0" max="20" step="0.1" value="0.7" style="color:var(--sage);"></div>
+
+      <div class="label" style="color:var(--teal);margin-top:4px;">Industry</div>
+      <div class="row"><div class="top"><span>Mining &amp; quarrying</span><span class="val" id="mining_v" style="color:var(--teal);"></span></div>
+        <input type="range" id="mining" min="0" max="16" step="0.1" value="2.2" style="color:var(--teal);"></div>
+      <div class="row"><div class="top"><span>Large-scale manufacturing</span><span class="val" id="mfgLarge_v" style="color:var(--teal);"></span></div>
+        <input type="range" id="mfgLarge" min="0" max="16" step="0.1" value="10.8" style="color:var(--teal);"></div>
+      <div class="row"><div class="top"><span>Small-scale manufacturing</span><span class="val" id="mfgSmall_v" style="color:var(--teal);"></span></div>
+        <input type="range" id="mfgSmall" min="0" max="16" step="0.1" value="1.9" style="color:var(--teal);"></div>
+      <div class="row"><div class="top"><span>Construction</span><span class="val" id="construction_v" style="color:var(--teal);"></span></div>
+        <input type="range" id="construction" min="0" max="16" step="0.1" value="2.9" style="color:var(--teal);"></div>
+      <div class="row"><div class="top"><span>Electricity, gas &amp; water</span><span class="val" id="electricity_v" style="color:var(--teal);"></span></div>
+        <input type="range" id="electricity" min="0" max="16" step="0.1" value="4.0" style="color:var(--teal);"></div>
+
+      <div class="label" style="color:var(--gold);margin-top:4px;">Services</div>
+      <div class="row"><div class="top"><span>Wholesale &amp; retail trade</span><span class="val" id="wholesale_v" style="color:var(--gold);"></span></div>
+        <input type="range" id="wholesale" min="0" max="24" step="0.1" value="20.4" style="color:var(--gold);"></div>
+      <div class="row"><div class="top"><span>Transport, storage &amp; comm.</span><span class="val" id="transport_v" style="color:var(--gold);"></span></div>
+        <input type="range" id="transport" min="0" max="24" step="0.1" value="15.0" style="color:var(--gold);"></div>
+      <div class="row"><div class="top"><span>Finance &amp; insurance</span><span class="val" id="finance_v" style="color:var(--gold);"></span></div>
+        <input type="range" id="finance" min="0" max="24" step="0.1" value="4.2" style="color:var(--gold);"></div>
+      <div class="row"><div class="top"><span>Housing services</span><span class="val" id="housing_v" style="color:var(--gold);"></span></div>
+        <input type="range" id="housing" min="0" max="24" step="0.1" value="7.8" style="color:var(--gold);"></div>
+      <div class="row"><div class="top"><span>General government services</span><span class="val" id="govt_v" style="color:var(--gold);"></span></div>
+        <input type="range" id="govt" min="0" max="24" step="0.1" value="8.4" style="color:var(--gold);"></div>
+      <div class="row"><div class="top"><span>Other private services</span><span class="val" id="otherServices_v" style="color:var(--gold);"></span></div>
+        <input type="range" id="otherServices" min="0" max="24" step="0.1" value="14.3" style="color:var(--gold);"></div>
+
+      <div class="label" style="margin-top:4px;">Basic &rarr; market price</div>
+      <div class="row"><div class="top"><span>Net indirect taxes</span><span class="val" id="nit_v" style="color:var(--rose);"></span></div>
+        <input type="range" id="nit" min="0" max="20" step="0.1" value="8.0" style="color:var(--rose);"></div>
+
+      <div class="note">Sub-sector splits are illustrative — PBS publishes the broad agriculture/industry/services
+        shares directly, but the finer breakdown here approximates typical proportions within each.</div>
+    </div>
+
+    <!-- right column -->
+    <div class="right-col">
+      <div class="row2">
+        <div class="panel donut-wrap">
+          <div class="label" style="align-self:flex-start;">GVA by broad sector</div>
+          <svg id="donut" width="170" height="170" viewBox="0 0 170 170"></svg>
+          <div class="big" style="font-family:'Fraunces',serif;font-size:20px;margin-top:10px;" id="gva_big"></div>
+          <div style="font-size:10.5px;color:var(--muted);margin-bottom:12px;">GVA at basic prices</div>
+          <div style="width:100%;font-size:12px;">
+            <div class="legend-row"><span style="color:var(--sage);">&#9632; Agriculture</span><span class="val" id="agriPct_v"></span></div>
+            <div class="legend-row"><span style="color:var(--teal);">&#9632; Industry</span><span class="val" id="indPct_v"></span></div>
+            <div class="legend-row" style="margin-bottom:0;"><span style="color:var(--gold);">&#9632; Services</span><span class="val" id="svcPct_v"></span></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="label">Sub-sector composition</div>
+          <div class="sub-head" style="color:var(--sage);" id="agriTotal_label"></div>
+          <div id="agri_bars"></div>
+          <div class="sub-head" style="color:var(--teal);" id="indTotal_label"></div>
+          <div id="ind_bars"></div>
+          <div class="sub-head" style="color:var(--gold);" id="svcTotal_label"></div>
+          <div id="svc_bars"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="label">Basic prices &rarr; market prices</div>
+        <div class="kpi-grid">
+          <div>
+            <div class="kpi-label">GVA at basic prices</div>
+            <div class="kpi-val" id="gvaKpi_v"></div>
+          </div>
+          <div>
+            <div class="kpi-label">+ Net indirect taxes</div>
+            <div class="kpi-val" style="color:var(--rose);" id="nitKpi_v"></div>
+          </div>
+          <div>
+            <div class="kpi-label">= GDP at market prices</div>
+            <div class="kpi-val" style="color:var(--gold);" id="gdpKpi_v"></div>
+          </div>
+        </div>
+        <div class="note">This is the third way of arriving at the same GDP figure produced by the expenditure
+          approach (C+I+G+NX) and the income approach (factor payments) — all three should, in
+          principle, land on the same number; in practice statistical agencies report small gaps
+          between them as the statistical discrepancy.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COL = { gold:'#c9a24b', teal:'#5fa8a0', sage:'#7fa87f', rose:'#b06b8a', muted:'#8b93a1', panel:'#1b2330', ink:'#e9e6dd', grid:'#2a3341', bg:'#141a23' };
+const $ = id => document.getElementById(id);
+function fmt(v){ return v.toFixed(1); }
+function money(v){ return 'Rs ' + fmt(Math.abs(v)) + ' tn'; }
+
+const agriIds = ['crops','livestock','forestry','fishing'];
+const indIds = ['mining','mfgLarge','mfgSmall','construction','electricity'];
+const svcIds = ['wholesale','transport','finance','housing','govt','otherServices'];
+const allIds = [...agriIds, ...indIds, ...svcIds, 'nit'];
+
+const labels = {
+  crops:'Crops', livestock:'Livestock', forestry:'Forestry', fishing:'Fishing',
+  mining:'Mining & quarrying', mfgLarge:'Large-scale manufacturing', mfgSmall:'Small-scale manufacturing',
+  construction:'Construction', electricity:'Electricity, gas & water',
+  wholesale:'Wholesale & retail trade', transport:'Transport, storage & comm.', finance:'Finance & insurance',
+  housing:'Housing services', govt:'General government services', otherServices:'Other private services'
+};
+
+function readState(){
+  const s = {};
+  allIds.forEach(id => s[id] = parseFloat($(id).value));
+  return s;
+}
+
+function svgEl(tag, attrs, text){
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for(const k in attrs) el.setAttribute(k, attrs[k]);
+  if(text !== undefined) el.textContent = text;
+  return el;
+}
+
+function barRow(container, label, value, max, color, pctOfGVA){
+  const row = document.createElement('div');
+  row.className = 'bar-row';
+  const pct = Math.max(0, Math.min(100, (value/max)*100));
+  row.innerHTML = `
+    <div class="bar-top"><span style="color:${COL.muted}">${label}</span>
+      <span style="font-family:'IBM Plex Mono',monospace;color:${COL.ink}">${money(value)} <span style="color:${COL.muted}">(${pctOfGVA.toFixed(1)}%)</span></span></div>
+    <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+  `;
+  container.appendChild(row);
+}
+
+function renderDonut(agri, ind, svc){
+  const svg = $('donut'); svg.innerHTML = '';
+  const size=170, r=size/2-14, cx=size/2, cy=size/2;
+  const circumference = 2*Math.PI*r;
+  svg.appendChild(svgEl('circle', {cx,cy,r,fill:'none',stroke:COL.grid,'stroke-width':18}));
+  const segments = [
+    { value:agri, color:COL.sage },
+    { value:ind, color:COL.teal },
+    { value:svc, color:COL.gold },
+  ];
+  const total = agri+ind+svc;
+  let offsetAcc = 0;
+  segments.forEach(s=>{
+    const frac = s.value/total;
+    const dash = frac*circumference;
+    svg.appendChild(svgEl('circle', {
+      cx, cy, r, fill:'none', stroke:s.color, 'stroke-width':18,
+      'stroke-dasharray':`${dash} ${circumference-dash}`,
+      'stroke-dashoffset':-offsetAcc,
+      transform:`rotate(-90 ${cx} ${cy})`
+    }));
+    offsetAcc += dash;
+  });
+}
+
+function render(){
+  const s = readState();
+  allIds.forEach(id => { $(id+'_v').textContent = money(s[id]); });
+
+  const agriTotal = agriIds.reduce((a,id)=>a+s[id],0);
+  const indTotal = indIds.reduce((a,id)=>a+s[id],0);
+  const svcTotal = svcIds.reduce((a,id)=>a+s[id],0);
+  const GVA = agriTotal + indTotal + svcTotal;
+  const GDPmp = GVA + s.nit;
+
+  const agriPct = (agriTotal/GVA)*100;
+  const indPct = (indTotal/GVA)*100;
+  const svcPct = (svcTotal/GVA)*100;
+
+  renderDonut(agriTotal, indTotal, svcTotal);
+  $('gva_big').textContent = money(GVA);
+  $('agriPct_v').textContent = agriPct.toFixed(1)+'%';
+  $('indPct_v').textContent = indPct.toFixed(1)+'%';
+  $('svcPct_v').textContent = svcPct.toFixed(1)+'%';
+
+  $('agriTotal_label').textContent = `Agriculture — ${money(agriTotal)}`;
+  $('indTotal_label').textContent = `Industry — ${money(indTotal)}`;
+  $('svcTotal_label').textContent = `Services — ${money(svcTotal)}`;
+
+  const agriBars = $('agri_bars'); agriBars.innerHTML='';
+  agriIds.forEach(id => barRow(agriBars, labels[id], s[id], 20, COL.sage, (s[id]/GVA)*100));
+  const indBars = $('ind_bars'); indBars.innerHTML='';
+  indIds.forEach(id => barRow(indBars, labels[id], s[id], 16, COL.teal, (s[id]/GVA)*100));
+  const svcBars = $('svc_bars'); svcBars.innerHTML='';
+  svcIds.forEach(id => barRow(svcBars, labels[id], s[id], 24, COL.gold, (s[id]/GVA)*100));
+
+  $('gvaKpi_v').textContent = money(GVA);
+  $('nitKpi_v').textContent = money(s.nit);
+  $('gdpKpi_v').textContent = money(GDPmp);
+}
+
+allIds.forEach(id => $(id).addEventListener('input', render));
+render();
+</script>
+</body>
+</html>

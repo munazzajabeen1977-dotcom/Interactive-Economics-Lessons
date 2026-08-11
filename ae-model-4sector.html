@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Aggregate Expenditure Model — Four-Sector Economy</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+  :root{
+    --bg:#141a23; --panel:#1b2330; --grid:#2a3341; --ink:#e9e6dd;
+    --muted:#8b93a1; --teal:#5fa8a0; --plum:#8b7bc0; --gold:#c9a24b;
+    --sage:#7fa87f; --slate:#6b87b0; --rose:#b06b8a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',sans-serif;
+    background-image:linear-gradient(#20293580 1px, transparent 1px), linear-gradient(90deg,#20293580 1px, transparent 1px);
+    background-size:28px 28px;
+    padding:28px 24px 40px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;}
+  header{border-bottom:1px solid var(--grid);padding-bottom:18px;margin-bottom:26px;}
+  .eyebrow{font-size:11px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:6px;}
+  h1{font-family:'Fraunces',serif;font-weight:600;font-size:32px;margin:0;}
+  p.lead{color:var(--muted);font-size:14px;max-width:720px;margin-top:8px;line-height:1.55;}
+  .grid{display:grid;grid-template-columns:280px 1fr;gap:26px;}
+  .panel{background:var(--panel);border:1px solid var(--grid);border-radius:6px;padding:20px;}
+  .label{font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;color:var(--muted);}
+  .row{margin-bottom:15px;}
+  .row .top{display:flex;justify-content:space-between;margin-bottom:5px;font-size:12.5px;color:#a7afc0;}
+  .row .val{font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+  input[type=range]{width:100%;height:3px;background:var(--grid);border-radius:2px;-webkit-appearance:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:currentColor;box-shadow:0 0 0 3px var(--panel);cursor:pointer;}
+  .right-col{display:flex;flex-direction:column;gap:20px;}
+  .row2{display:grid;grid-template-columns:1fr 300px;gap:20px;}
+  .big{font-family:'Fraunces',serif;font-size:26px;margin-bottom:2px;}
+  .sub{font-size:11.5px;color:var(--muted);margin-bottom:14px;}
+  .bar-row{margin-bottom:12px;}
+  .bar-top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;}
+  .bar-track{background:var(--grid);height:10px;border-radius:3px;}
+  .bar-fill{height:100%;border-radius:3px;transition:width .2s;}
+  svg text{font-family:'Inter',sans-serif;}
+  .kpi-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+  .kpi-label{font-size:11.5px;color:var(--muted);}
+  .kpi-val{font-family:'IBM Plex Mono',monospace;font-size:18px;}
+  .note{font-size:11px;color:#5c6373;margin-top:12px;line-height:1.5;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Keynesian Cross &middot; Households, Firms, Government, Rest of World</div>
+    <h1>Aggregate Expenditure Model</h1>
+    <p class="lead">AE = C + I + G + NX in a four-sector economy with induced consumption, proportional
+      taxes, and income-sensitive imports. Adjust any sector below to see equilibrium output
+      shift along the 45&deg; diagram, and how the multiplier scales the response.</p>
+  </header>
+
+  <div class="grid">
+    <!-- controls -->
+    <div class="panel">
+      <div class="label" style="color:var(--gold);">Households</div>
+      <div class="row">
+        <div class="top"><span>Autonomous consumption (C&#8320;)</span><span class="val" id="C0_v" style="color:var(--gold);"></span></div>
+        <input type="range" id="C0" min="0" max="400" step="5" value="100" style="color:var(--gold);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Marginal propensity to consume</span><span class="val" id="mpc_v" style="color:var(--gold);"></span></div>
+        <input type="range" id="mpc" min="0.1" max="0.95" step="0.01" value="0.7" style="color:var(--gold);">
+      </div>
+
+      <div class="label" style="color:var(--teal);margin-top:4px;">Firms</div>
+      <div class="row">
+        <div class="top"><span>Autonomous investment (I&#8320;)</span><span class="val" id="I0_v" style="color:var(--teal);"></span></div>
+        <input type="range" id="I0" min="0" max="500" step="5" value="150" style="color:var(--teal);">
+      </div>
+
+      <div class="label" style="color:var(--plum);margin-top:4px;">Government</div>
+      <div class="row">
+        <div class="top"><span>Government spending (G&#8320;)</span><span class="val" id="G0_v" style="color:var(--plum);"></span></div>
+        <input type="range" id="G0" min="0" max="500" step="5" value="200" style="color:var(--plum);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Autonomous taxes (T&#8320;)</span><span class="val" id="T0_v" style="color:var(--plum);"></span></div>
+        <input type="range" id="T0" min="0" max="300" step="5" value="50" style="color:var(--plum);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Marginal tax rate (t)</span><span class="val" id="t_v" style="color:var(--plum);"></span></div>
+        <input type="range" id="t" min="0" max="0.5" step="0.01" value="0.2" style="color:var(--plum);">
+      </div>
+
+      <div class="label" style="color:var(--sage);margin-top:4px;">Rest of world</div>
+      <div class="row">
+        <div class="top"><span>Exports (X&#8320;)</span><span class="val" id="X0_v" style="color:var(--sage);"></span></div>
+        <input type="range" id="X0" min="0" max="400" step="5" value="120" style="color:var(--sage);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Autonomous imports (M&#8320;)</span><span class="val" id="M0_v" style="color:var(--sage);"></span></div>
+        <input type="range" id="M0" min="0" max="200" step="5" value="40" style="color:var(--sage);">
+      </div>
+      <div class="row">
+        <div class="top"><span>Marginal propensity to import</span><span class="val" id="mpm_v" style="color:var(--sage);"></span></div>
+        <input type="range" id="mpm" min="0" max="0.4" step="0.01" value="0.15" style="color:var(--sage);">
+      </div>
+
+      <div class="label" style="margin-top:4px;">Policy target</div>
+      <div class="row">
+        <div class="top"><span>Potential / full-employment output (Yf)</span><span class="val" id="Yf_v" style="color:var(--rose);"></span></div>
+        <input type="range" id="Yf" min="200" max="2000" step="10" value="900" style="color:var(--rose);">
+      </div>
+    </div>
+
+    <!-- right column -->
+    <div class="right-col">
+      <div class="row2">
+        <div class="panel">
+          <div class="label" style="margin-bottom:10px;">45&deg; Diagram — Aggregate Expenditure vs Income</div>
+          <svg id="chart" viewBox="0 0 520 380" width="100%" height="auto"></svg>
+        </div>
+        <div class="panel">
+          <div class="label">Equilibrium</div>
+          <div class="big" style="color:var(--gold);" id="ystar_big"></div>
+          <div class="sub" id="mult_sub"></div>
+          <div id="cascade_bars"></div>
+          <div class="note" style="border-top:1px solid var(--grid);padding-top:10px;margin-top:2px;">
+            Leakages S+T+M = <span id="leak_v" style="color:var(--ink);font-family:'IBM Plex Mono',monospace;"></span><br>
+            Injections I+G+X = <span id="inj_v" style="color:var(--ink);font-family:'IBM Plex Mono',monospace;"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="label">Output gap &amp; the multiplier at work</div>
+        <div class="kpi-grid">
+          <div>
+            <div class="kpi-label">Output gap (Yf − Y*)</div>
+            <div class="kpi-val" id="gap_v"></div>
+          </div>
+          <div>
+            <div class="kpi-label">Multiplier</div>
+            <div class="kpi-val" style="color:var(--plum);" id="k_v"></div>
+          </div>
+          <div>
+            <div class="kpi-label">&Delta;G needed to close gap</div>
+            <div class="kpi-val" style="color:var(--gold);" id="dg_v"></div>
+          </div>
+        </div>
+        <div class="note">Because part of every extra rupee of income leaks out to taxes and imports, the
+          four-sector multiplier (1 / (1 &minus; MPC&times;(1&minus;t) + MPM)) is smaller than the simple
+          closed-economy multiplier 1/(1&minus;MPC) — try raising the tax rate or import propensity
+          and watch the AE line flatten and the gap-closing &Delta;G grow.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COL = { gold:'#c9a24b', teal:'#5fa8a0', plum:'#8b7bc0', sage:'#7fa87f', slate:'#6b87b0', rose:'#b06b8a', muted:'#8b93a1', panel:'#1b2330', ink:'#e9e6dd', grid:'#2a3341', bg:'#141a23' };
+const $ = id => document.getElementById(id);
+function fmt(v){ return Math.round(v).toLocaleString(); }
+
+const ids = ['C0','mpc','I0','G0','T0','t','X0','M0','mpm','Yf'];
+const pctIds = ['mpc','t','mpm'];
+function readState(){
+  const s = {};
+  ids.forEach(id => s[id] = parseFloat($(id).value));
+  return s;
+}
+
+function svgEl(tag, attrs, text){
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for(const k in attrs) el.setAttribute(k, attrs[k]);
+  if(text !== undefined) el.textContent = text;
+  return el;
+}
+
+function barRow(container, label, value, max, color){
+  const row = document.createElement('div');
+  row.className = 'bar-row';
+  const pct = Math.max(0, Math.min(100, (Math.abs(value)/max)*100));
+  row.innerHTML = `
+    <div class="bar-top"><span style="color:${COL.muted}">${label}</span>
+      <span style="font-family:'IBM Plex Mono',monospace;color:${COL.ink}">${value<0?'\u2212':''}$${fmt(Math.abs(value))}bn</span></div>
+    <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+  `;
+  container.appendChild(row);
+}
+
+function render(){
+  const s = readState();
+  ids.forEach(id => {
+    $(id+'_v').textContent = pctIds.includes(id) ? (s[id]*100).toFixed(0)+'%' : '$'+fmt(s[id])+'bn';
+  });
+
+  const A = s.C0 - s.mpc*s.T0 + s.I0 + s.G0 + (s.X0 - s.M0);
+  const slope = s.mpc*(1-s.t) - s.mpm;
+  const k = 1/(1-slope);
+  const Ystar = A/(1-slope);
+
+  const Tstar = s.T0 + s.t*Ystar;
+  const Cstar = s.C0 + s.mpc*(Ystar - Tstar);
+  const Mstar = s.M0 + s.mpm*Ystar;
+  const NXstar = s.X0 - Mstar;
+  const Sstar = Ystar - Tstar - Cstar;
+
+  const leakages = Sstar + Tstar + Mstar;
+  const injections = s.I0 + s.G0 + s.X0;
+
+  const gap = s.Yf - Ystar;
+  const dGneeded = gap / k;
+
+  $('ystar_big').textContent = `Y* = $${fmt(Ystar)}bn`;
+  $('mult_sub').textContent = `multiplier k = ${k.toFixed(2)}`;
+
+  const cascade = [
+    { label:'C — Consumption', value:Cstar, color:COL.gold },
+    { label:'I — Investment', value:s.I0, color:COL.teal },
+    { label:'G — Government', value:s.G0, color:COL.plum },
+    { label:'NX — Net exports', value:NXstar, color:COL.sage },
+  ];
+  const barMax = Math.max(...cascade.map(c=>Math.abs(c.value))) * 1.2;
+  const cBars = $('cascade_bars'); cBars.innerHTML = '';
+  cascade.forEach(c => barRow(cBars, c.label, c.value, barMax, c.color));
+
+  $('leak_v').textContent = `$${fmt(leakages)}bn`;
+  $('inj_v').textContent = `$${fmt(injections)}bn`;
+
+  $('gap_v').textContent = (gap>=0?'+':'') + '$' + fmt(gap) + 'bn';
+  $('gap_v').style.color = gap>=0 ? COL.sage : COL.rose;
+  $('k_v').textContent = k.toFixed(2) + '\u00d7';
+  $('dg_v').textContent = (dGneeded>=0?'+':'') + '$' + fmt(dGneeded) + 'bn';
+
+  // ---- 45-degree diagram ----
+  const chartMaxY = Math.max(Ystar, s.Yf) * 1.35;
+  const CW=520, CH=380, m={l:55,r:20,t:20,b:45};
+  const sx = y => m.l + (y/chartMaxY)*(CW-m.l-m.r);
+  const sy = ae => CH-m.b - (ae/chartMaxY)*(CH-m.t-m.b);
+  const aeAt = y => A + slope*y;
+
+  const svg = $('chart'); svg.innerHTML = '';
+  [0.25,0.5,0.75,1].forEach(f=>{
+    svg.appendChild(svgEl('line', {x1:m.l, y1:sy(chartMaxY*f), x2:CW-m.r, y2:sy(chartMaxY*f), stroke:COL.grid, 'stroke-dasharray':'2 4'}));
+  });
+  svg.appendChild(svgEl('line', {x1:m.l, y1:sy(0), x2:CW-m.r, y2:sy(0), stroke:COL.grid, 'stroke-width':1.4}));
+  svg.appendChild(svgEl('line', {x1:m.l, y1:sy(chartMaxY), x2:m.l, y2:sy(0), stroke:COL.grid, 'stroke-width':1.4}));
+  svg.appendChild(svgEl('text', {x:CW/2, y:CH-8, 'text-anchor':'middle', 'font-size':11, fill:COL.muted}, 'National Income, Y'));
+  svg.appendChild(svgEl('text', {x:16, y:CH/2, 'font-size':11, fill:COL.muted, transform:`rotate(-90 16 ${CH/2})`}, 'Aggregate Expenditure'));
+
+  svg.appendChild(svgEl('line', {x1:sx(s.Yf), y1:m.t, x2:sx(s.Yf), y2:sy(0), stroke:COL.rose, 'stroke-dasharray':'3 3'}));
+  svg.appendChild(svgEl('text', {x:sx(s.Yf)+4, y:m.t+10, 'font-size':10, fill:COL.rose}, 'Yf'));
+
+  svg.appendChild(svgEl('path', {d:`M ${sx(0)},${sy(0)} L ${sx(chartMaxY)},${sy(chartMaxY)}`, stroke:'#5c6373', 'stroke-width':1.4, fill:'none'}));
+  svg.appendChild(svgEl('text', {x:sx(chartMaxY)-10, y:sy(chartMaxY)-6, 'font-size':10, fill:'#5c6373', 'text-anchor':'end'}, 'Y = AE'));
+
+  svg.appendChild(svgEl('path', {d:`M ${sx(0)},${sy(aeAt(0))} L ${sx(chartMaxY)},${sy(aeAt(chartMaxY))}`, stroke:COL.teal, 'stroke-width':2.2, fill:'none'}));
+  svg.appendChild(svgEl('text', {x:sx(chartMaxY)-10, y:sy(aeAt(chartMaxY))-8, 'font-size':10, fill:COL.teal, 'text-anchor':'end'}, 'AE = A + slope\u00b7Y'));
+
+  svg.appendChild(svgEl('line', {x1:sx(Ystar), y1:sy(Ystar), x2:sx(Ystar), y2:sy(0), stroke:COL.gold, 'stroke-dasharray':'2 3'}));
+  svg.appendChild(svgEl('line', {x1:m.l, y1:sy(Ystar), x2:sx(Ystar), y2:sy(Ystar), stroke:COL.gold, 'stroke-dasharray':'2 3'}));
+  svg.appendChild(svgEl('circle', {cx:sx(Ystar), cy:sy(Ystar), r:5.5, fill:COL.gold, stroke:COL.bg, 'stroke-width':1.5}));
+  svg.appendChild(svgEl('text', {x:sx(Ystar)+8, y:sy(Ystar)-8, 'font-size':11, fill:COL.gold}, `Y* = ${fmt(Ystar)}`));
+}
+
+ids.forEach(id => $(id).addEventListener('input', render));
+render();
+</script>
+</body>
+</html>

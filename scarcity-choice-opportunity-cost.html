@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Scarcity, choice, and opportunity cost</title>
+<style>
+  :root {
+    --bg: #fdf9f0;
+    --surface-1: #ffffff;
+    --text-primary: #241d14;
+    --text-secondary: #7a6e5c;
+    --border: #e8dcc4;
+    --border-strong: #d4a24e;
+    --accent: #e0433f;
+    --accent-fill: #f4a259;
+    --good-a: #2d9d78;
+    --good-b: #5b6fd6;
+    --shade: #ffd166;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1710;
+      --surface-1: #2a2318;
+      --text-primary: #fbf3e3;
+      --text-secondary: #c9b896;
+      --border: #4a3d29;
+      --border-strong: #d4a24e;
+      --accent: #ff6b5e;
+      --accent-fill: #ffb86b;
+      --good-a: #4fd8a8;
+      --good-b: #8b9bff;
+      --shade: #ffd166;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 2rem 1.5rem 3rem;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    display: flex;
+    justify-content: center;
+  }
+  .wrap { max-width: 700px; width: 100%; }
+  h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; }
+  p.sub { color: var(--text-secondary); font-size: 15px; margin: 0 0 1.5rem; line-height: 1.5; }
+  svg { width: 100%; height: auto; display: block; }
+  .ts { font-size: 12px; fill: var(--text-secondary); }
+  .th { font-size: 13px; fill: var(--text-primary); font-weight: 500; }
+  .slider-row {
+    display: flex; align-items: center; gap: 12px;
+    margin: 0.5rem 0 1.5rem;
+  }
+  .slider-row label { font-size: 14px; color: var(--text-secondary); min-width: 90px; }
+  .slider-row span { font-size: 14px; font-weight: 600; min-width: 44px; text-align: right; }
+  input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--good-b), var(--shade), var(--good-a));
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 3px solid var(--surface-1);
+    box-shadow: 0 0 0 1px var(--border-strong);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 3px solid var(--surface-1);
+    box-shadow: 0 0 0 1px var(--border-strong);
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .card {
+    background: var(--surface-1);
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .card p.label { font-size: 13px; color: var(--text-secondary); margin: 0 0 4px; }
+  .card p.value { font-size: 24px; font-weight: 600; margin: 0; }
+  .footnote { font-size: 13px; color: var(--text-secondary); margin-top: 1.5rem; line-height: 1.6; }
+  @media (max-width: 480px) {
+    .cards { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Scarcity, choice, and opportunity cost</h1>
+  <p class="sub">Drag the slider to reallocate limited resources between two goods and watch the tradeoff.</p>
+
+  <svg viewBox="0 0 680 460" role="img" aria-label="Production possibilities frontier chart">
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M2 1L8 5L2 9" fill="none" stroke="var(--border-strong)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </marker>
+    </defs>
+    <line x1="90" y1="380" x2="90" y2="40" stroke="var(--good-b)" stroke-width="2" marker-end="url(#arrow)"/>
+    <line x1="90" y1="380" x2="620" y2="380" stroke="var(--good-a)" stroke-width="2" marker-end="url(#arrow)"/>
+    <text class="th" x="90" y="26" text-anchor="middle" fill="var(--good-b)">Good B</text>
+    <text class="th" x="630" y="384" text-anchor="middle" dominant-baseline="central" fill="var(--good-a)">Good A</text>
+    <path id="ppf" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+    <path id="shade" fill="var(--shade)" opacity="0.35" stroke="none"/>
+    <line id="dropA" stroke="var(--good-a)" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6"/>
+    <line id="dropB" stroke="var(--good-b)" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6"/>
+    <circle id="pt" r="7" fill="var(--accent)" stroke="var(--bg)" stroke-width="2"/>
+    <text class="ts" x="200" y="410" text-anchor="middle">Scarcity: only points on or inside the curve are possible</text>
+  </svg>
+
+  <div class="slider-row">
+    <label for="slider">Allocate to A</label>
+    <input type="range" min="0" max="100" value="50" step="1" id="slider">
+    <span id="sliderOut">50%</span>
+  </div>
+
+  <div class="cards">
+    <div class="card" style="border-top: 3px solid var(--good-a);">
+      <p class="label">Good A produced</p>
+      <p class="value" id="qa" style="color: var(--good-a);">70.7</p>
+    </div>
+    <div class="card" style="border-top: 3px solid var(--good-b);">
+      <p class="label">Good B produced</p>
+      <p class="value" id="qb" style="color: var(--good-b);">70.7</p>
+    </div>
+    <div class="card" style="border-top: 3px solid var(--accent);">
+      <p class="label">Opportunity cost of 1 more A</p>
+      <p class="value" id="oc" style="color: var(--accent);">1.0 B</p>
+    </div>
+  </div>
+
+  <p class="footnote">
+    The curve is a production possibilities frontier: it bows outward because resources
+    aren't equally suited to producing both goods. Choice means picking a point along it;
+    scarcity means you can never get outside it; opportunity cost is what the curve's slope
+    tells you — how much of one good you give up to get more of the other. Notice the cost
+    climbs as you push toward either end, since the last resources you shift over are the
+    ones least suited to the new job.
+  </p>
+</div>
+
+<script>
+const X0 = 90, Y0 = 380, SCALE = 530, MAXV = 100;
+function toPx(a, b) {
+  return { x: X0 + (a / MAXV) * SCALE, y: Y0 - (b / MAXV) * (SCALE * 340 / 530) };
+}
+
+let path = '';
+for (let i = 0; i <= 50; i++) {
+  const t = i / 50;
+  const a = MAXV * Math.sin(t * Math.PI / 2);
+  const b = MAXV * Math.cos(t * Math.PI / 2);
+  const p = toPx(a, b);
+  path += (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ' ';
+}
+document.getElementById('ppf').setAttribute('d', path);
+
+function update(v) {
+  const t = v / 100;
+  const a = MAXV * Math.sin(t * Math.PI / 2);
+  const b = MAXV * Math.cos(t * Math.PI / 2);
+  const oc = Math.tan(t * Math.PI / 2);
+  const p = toPx(a, b);
+
+  document.getElementById('pt').setAttribute('cx', p.x);
+  document.getElementById('pt').setAttribute('cy', p.y);
+  document.getElementById('dropA').setAttribute('x1', p.x);
+  document.getElementById('dropA').setAttribute('y1', p.y);
+  document.getElementById('dropA').setAttribute('x2', p.x);
+  document.getElementById('dropA').setAttribute('y2', Y0);
+  document.getElementById('dropB').setAttribute('x1', p.x);
+  document.getElementById('dropB').setAttribute('y1', p.y);
+  document.getElementById('dropB').setAttribute('x2', X0);
+  document.getElementById('dropB').setAttribute('y2', p.y);
+
+  const shadePath = 'M' + X0 + ' ' + Y0 + ' L' + p.x.toFixed(1) + ' ' + Y0 +
+    ' L' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ' L' + X0 + ' ' + p.y.toFixed(1) + ' Z';
+  document.getElementById('shade').setAttribute('d', shadePath);
+
+  document.getElementById('qa').textContent = a.toFixed(1);
+  document.getElementById('qb').textContent = b.toFixed(1);
+  const ocDisplay = oc > 9.9 ? '9.9+' : oc.toFixed(1);
+  document.getElementById('oc').textContent = ocDisplay + ' B';
+  document.getElementById('sliderOut').textContent = v + '%';
+}
+
+document.getElementById('slider').addEventListener('input', e => update(+e.target.value));
+update(50);
+</script>
+</body>
+</html>

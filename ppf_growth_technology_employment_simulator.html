@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PPF Shifts: Growth, Technology &amp; Employment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Architects+Daughter&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --board: #1e3a2e; --frame: #6b4a32;
+    --chalk: #f4f1e6; --chalk-dim: #cfd6c9;
+    --old: #cfd6c9; --new: #8fb8de; --choice: #f2c94c;
+    --shadow: rgba(0,0,0,0.35);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: #0d1a14;
+    background-image: radial-gradient(circle at 20% 10%, #16291f 0%, #0d1a14 60%);
+    color: var(--chalk); font-family: 'Architects Daughter', cursive;
+    padding: 28px 14px 60px;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 20px; }
+  h1 { font-family: 'Kalam', cursive; font-weight: 700; font-size: clamp(1.3rem, 4vw, 1.9rem); margin: 0 0 6px; }
+  header p { color: var(--chalk-dim); font-size: 0.93rem; margin: 0; }
+
+  .board {
+    background: var(--board); border: 14px solid var(--frame); border-radius: 6px;
+    box-shadow: 0 20px 40px var(--shadow), inset 0 0 60px rgba(0,0,0,0.3); padding: 20px;
+  }
+  canvas { width: 100%; height: auto; display: block; }
+  .legend { display: flex; gap: 14px; justify-content: center; margin-top: 10px; font-size: 0.78rem; color: var(--chalk-dim); flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+
+  .readout {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 14px;
+    margin-top: 18px; font-family: 'Kalam', cursive;
+  }
+  .readout div { text-align: center; }
+  .readout div span:first-child { color: var(--chalk-dim); font-size: 0.72rem; display: block; }
+  .readout b { font-size: 1.05rem; }
+
+  .badge {
+    display: block; text-align: center; margin-top: 12px; padding: 6px 16px; border-radius: 20px;
+    font-family: 'Kalam', cursive; font-size: 0.85rem; font-weight: 700;
+  }
+
+  .panel {
+    background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 18px 20px; margin-top: 18px;
+  }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .presets button {
+    font-family: 'Architects Daughter', cursive;
+    background: transparent; color: var(--chalk);
+    border: 1.5px dashed var(--chalk-dim); border-radius: 20px;
+    padding: 7px 13px; font-size: 0.82rem; cursor: pointer;
+  }
+  .presets button:hover { border-color: var(--new); color: var(--new); }
+
+  .group-title { font-family: 'Kalam', cursive; font-size: 0.85rem; color: var(--chalk-dim); margin: 16px 0 10px; }
+  .control { margin-bottom: 14px; }
+  .control:last-child { margin-bottom: 0; }
+  .control label { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--chalk-dim); margin-bottom: 4px; }
+  .control label b { color: var(--chalk); }
+  .control .hint { font-size: 0.75rem; color: rgba(207,214,201,0.6); margin-bottom: 6px; }
+  input[type=range] { width: 100%; -webkit-appearance: none; height: 4px; background: rgba(255,255,255,0.25); border-radius: 2px; outline: none; }
+  #growth, #employment { accent-color: var(--new); }
+  #techA, #techB { accent-color: var(--choice); }
+  #choiceA { accent-color: var(--choice); }
+
+  .note { margin-top: 18px; font-size: 0.88rem; line-height: 1.55; color: var(--chalk-dim);
+    border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 14px; }
+  .note b { color: var(--chalk); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>PPF Shifts: Growth, Technology &amp; Employment</h1>
+    <p>Three different causes push the production possibilities frontier outward in three different ways</p>
+  </header>
+
+  <div class="board">
+    <canvas id="chart" width="700" height="440"></canvas>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--old)"></i>Original PPF</span>
+      <span><i class="dot" style="background:var(--new)"></i>New PPF</span>
+      <span><i class="dot" style="background:var(--choice)"></i>Chosen point</span>
+    </div>
+
+    <div class="readout">
+      <div><span id="labelA">Food (max)</span><b id="aMaxVal">--</b></div>
+      <div><span id="labelB">Clothing (max)</span><b id="bMaxVal">--</b></div>
+      <div><span>Total capacity change</span><b id="capChangeVal">--</b></div>
+      <div><span>Opportunity cost at choice</span><b id="ocVal">--</b></div>
+    </div>
+
+    <span class="badge" id="statusBadge">--</span>
+  </div>
+
+  <div class="panel">
+    <div class="presets">
+      <button data-g="1" data-e="1" data-ta="1" data-tb="1">Reset (no change)</button>
+      <button data-g="1.4" data-e="1" data-ta="1" data-tb="1">Economic growth</button>
+      <button data-g="1" data-e="1" data-ta="1.6" data-tb="1">Tech breakthrough in Food</button>
+      <button data-g="1" data-e="1.3" data-ta="1" data-tb="1">Employment rises</button>
+      <button data-g="1.2" data-e="1.2" data-ta="1.3" data-tb="1.1">Everything at once</button>
+    </div>
+
+    <div class="group-title">Economic growth &amp; employment (shift both goods together)</div>
+    <div class="control">
+      <label>Capital &amp; resource growth <b id="v-growth">1.00×</b></label>
+      <div class="hint">More factories, machines, and infrastructure — expands capacity for everything</div>
+      <input type="range" id="growth" min="1" max="1.8" value="1" step="0.05">
+    </div>
+    <div class="control">
+      <label>Employment (labor force) <b id="v-employment">1.00×</b></label>
+      <div class="hint">More workers producing — also expands capacity for everything, a parallel outward shift</div>
+      <input type="range" id="employment" min="1" max="1.8" value="1" step="0.05">
+    </div>
+
+    <div class="group-title">Technology (can shift just one good — a biased shift)</div>
+    <div class="control">
+      <label>Technology for <span id="techLabelA">Food</span> <b id="v-techA">1.00×</b></label>
+      <div class="hint">A breakthrough specific to this good stretches the frontier toward it only</div>
+      <input type="range" id="techA" min="1" max="2" value="1" step="0.05">
+    </div>
+    <div class="control">
+      <label>Technology for <span id="techLabelB">Clothing</span> <b id="v-techB">1.00×</b></label>
+      <input type="range" id="techB" min="1" max="2" value="1" step="0.05">
+    </div>
+
+    <div class="group-title">Choice on the new frontier</div>
+    <div class="control">
+      <label id="choiceLabel">Quantity of Food chosen <b id="v-choice">30</b></label>
+      <input type="range" id="choiceA" min="0" max="100" value="30" step="1">
+    </div>
+  </div>
+
+  <div class="note">
+    <b>How to read it:</b> growth and employment push the <b>whole</b> frontier outward in a
+    parallel shift — the economy can make more of everything, but the trade-off between the two
+    goods at any given point looks similar in shape. Technology aimed at just one good produces a
+    <b>biased</b> shift — the frontier stretches further along that axis than the other,
+    changing the trade-off itself, not just the scale of it.
+  </div>
+</div>
+
+<script>
+function getVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const pad = 48;
+const BASE_MAX = 60;
+const VIEW_MAX = 130; // fixed view window, generous enough for max multipliers
+
+function toX(x) { return pad + (x / VIEW_MAX) * (W - pad * 2); }
+function toY(y) { return H - pad - (y / VIEW_MAX) * (H - pad * 2); }
+
+function drawAxes(labelA, labelB) {
+  ctx.strokeStyle = 'rgba(244,241,230,0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pad, pad); ctx.lineTo(pad, H - pad); ctx.lineTo(W - pad, H - pad);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(244,241,230,0.6)';
+  ctx.font = "14px 'Architects Daughter', cursive";
+  ctx.fillText(labelA, W - pad - Math.min(80, labelA.length * 7), H - pad + 26);
+  ctx.save();
+  ctx.translate(pad - 30, pad + 30);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText(labelB, 0, 0);
+  ctx.restore();
+}
+
+function drawPPF(xmax, ymax, color, dashed, bold) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = bold ? 3 : 2;
+  if (dashed) ctx.setLineDash([6, 5]);
+  ctx.beginPath();
+  let started = false;
+  for (let x = 0; x <= xmax; x += xmax / 100) {
+    const ratio = Math.min(1, x / xmax);
+    const y = ymax * Math.sqrt(Math.max(0, 1 - ratio * ratio));
+    const jx = toX(x), jy = toY(y);
+    if (!started) { ctx.moveTo(jx, jy); started = true; } else ctx.lineTo(jx, jy);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function dot(x, y, color, r) {
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(toX(x), toY(y), r || 6, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1; ctx.stroke();
+}
+
+function render() {
+  const growth = Number(document.getElementById('growth').value);
+  const employment = Number(document.getElementById('employment').value);
+  const techA = Number(document.getElementById('techA').value);
+  const techB = Number(document.getElementById('techB').value);
+  const aChosenRaw = Number(document.getElementById('choiceA').value);
+
+  document.getElementById('v-growth').textContent = growth.toFixed(2) + '×';
+  document.getElementById('v-employment').textContent = employment.toFixed(2) + '×';
+  document.getElementById('v-techA').textContent = techA.toFixed(2) + '×';
+  document.getElementById('v-techB').textContent = techB.toFixed(2) + '×';
+  document.getElementById('v-choice').textContent = aChosenRaw;
+
+  const labelA = 'Food', labelB = 'Clothing';
+  document.getElementById('labelA').textContent = labelA + ' (max)';
+  document.getElementById('labelB').textContent = labelB + ' (max)';
+  document.getElementById('techLabelA').textContent = labelA;
+  document.getElementById('techLabelB').textContent = labelB;
+  document.getElementById('choiceLabel').childNodes[0].textContent = 'Quantity of ' + labelA + ' chosen ';
+
+  const generalMultiplier = growth * employment;
+  const AmaxOld = BASE_MAX, BmaxOld = BASE_MAX;
+  const AmaxNew = BASE_MAX * generalMultiplier * techA;
+  const BmaxNew = BASE_MAX * generalMultiplier * techB;
+
+  const aChosen = Math.min(aChosenRaw, AmaxNew);
+  const aRatio = Math.min(1, aChosen / AmaxNew);
+  const bOnFrontier = BmaxNew * Math.sqrt(Math.max(0, 1 - aRatio * aRatio));
+  const oc = bOnFrontier > 0 ? (BmaxNew * BmaxNew / (AmaxNew * AmaxNew)) * (aChosen / bOnFrontier) : Infinity;
+
+  ctx.clearRect(0, 0, W, H);
+  drawAxes(labelA, labelB);
+
+  drawPPF(AmaxOld, BmaxOld, getVar('--old'), true, false);
+  drawPPF(AmaxNew, BmaxNew, getVar('--new'), false, true);
+
+  dot(aChosen, bOnFrontier, getVar('--choice'));
+
+  ctx.strokeStyle = 'rgba(244,241,230,0.3)';
+  ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(toX(aChosen), H - pad); ctx.lineTo(toX(aChosen), toY(bOnFrontier));
+  ctx.lineTo(pad, toY(bOnFrontier));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  document.getElementById('aMaxVal').textContent = AmaxOld.toFixed(0) + ' → ' + AmaxNew.toFixed(0);
+  document.getElementById('bMaxVal').textContent = BmaxOld.toFixed(0) + ' → ' + BmaxNew.toFixed(0);
+  const capChange = ((AmaxNew * BmaxNew) / (AmaxOld * BmaxOld) - 1) * 100;
+  document.getElementById('capChangeVal').textContent = (capChange >= 0 ? '+' : '') + capChange.toFixed(0) + '%';
+  document.getElementById('ocVal').textContent = isFinite(oc) ? oc.toFixed(2) + ' ' + labelB : '—';
+
+  const badge = document.getElementById('statusBadge');
+  const isBiased = Math.abs(techA - techB) > 0.02;
+  const isUniform = (growth > 1.02 || employment > 1.02);
+  if (!isBiased && !isUniform) {
+    badge.textContent = 'No change from the original frontier';
+    badge.style.background = 'rgba(207,214,201,0.15)';
+    badge.style.color = 'var(--chalk-dim)';
+    badge.style.border = '1px solid rgba(207,214,201,0.3)';
+  } else if (isBiased && !isUniform) {
+    badge.textContent = 'Biased shift — technology favors one good over the other';
+    badge.style.background = 'rgba(242,201,76,0.16)';
+    badge.style.color = 'var(--choice)';
+    badge.style.border = '1px solid var(--choice)';
+  } else if (!isBiased && isUniform) {
+    badge.textContent = 'Parallel shift — growth and employment expand both goods equally';
+    badge.style.background = 'rgba(143,184,222,0.16)';
+    badge.style.color = 'var(--new)';
+    badge.style.border = '1px solid var(--new)';
+  } else {
+    badge.textContent = 'Combined shift — bigger frontier, and tilted toward one good';
+    badge.style.background = 'rgba(143,184,222,0.16)';
+    badge.style.color = 'var(--new)';
+    badge.style.border = '1px solid var(--new)';
+  }
+}
+
+['growth','employment','techA','techB','choiceA'].forEach(id => {
+  document.getElementById(id).addEventListener('input', render);
+});
+
+document.querySelectorAll('.presets button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('growth').value = btn.dataset.g;
+    document.getElementById('employment').value = btn.dataset.e;
+    document.getElementById('techA').value = btn.dataset.ta;
+    document.getElementById('techB').value = btn.dataset.tb;
+    render();
+  });
+});
+
+render();
+</script>
+</body>
+</html>
